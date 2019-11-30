@@ -217,31 +217,36 @@ public abstract class ChassisStandard extends OpMode {
 
         // Initialize the motors.
         if (useMotors) {
-            motorBackLeft = hardwareMap.get(DcMotor.class, "motor0");
-            motorBackRight = hardwareMap.get(DcMotor.class, "motor1");
+            try  {
+                motorBackLeft = hardwareMap.get(DcMotor.class, "motor0");
+                motorBackRight = hardwareMap.get(DcMotor.class, "motor1");
 
-            // Most robots need the motor on one side to be reversed to drive forward
-            // Reverse the motor that runs backwards when connected directly to the battery
-            motorBackLeft.setDirection(config.isLeftMotorReversed() ? DcMotor.Direction.REVERSE : DcMotor.Direction.FORWARD);
-            motorBackRight.setDirection(config.isRightMotorReversed() ? DcMotor.Direction.REVERSE : DcMotor.Direction.FORWARD);
+                // Most robots need the motor on one side to be reversed to drive forward
+                // Reverse the motor that runs backwards when connected directly to the battery
+                motorBackLeft.setDirection(config.isLeftMotorReversed() ? DcMotor.Direction.REVERSE : DcMotor.Direction.FORWARD);
+                motorBackRight.setDirection(config.isRightMotorReversed() ? DcMotor.Direction.REVERSE : DcMotor.Direction.FORWARD);
 
-            // initilize the encoder
-            motorBackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            motorBackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                // initilize the encoder
+                motorBackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                motorBackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-            if (config.getUseFourWheelDrive()) {
-                motorFrontLeft = hardwareMap.get(DcMotor.class, "motor2");
-                motorFrontRight = hardwareMap.get(DcMotor.class, "motor3");
+                if (config.getUseFourWheelDrive()) {
+                    motorFrontLeft = hardwareMap.get(DcMotor.class, "motor2");
+                    motorFrontRight = hardwareMap.get(DcMotor.class, "motor3");
 
-                motorFrontLeft.setDirection(config.isLeftMotorReversed() ? DcMotor.Direction.REVERSE : DcMotor.Direction.FORWARD);
-                motorFrontRight.setDirection(config.isRightMotorReversed() ? DcMotor.Direction.REVERSE : DcMotor.Direction.FORWARD);
+                    motorFrontLeft.setDirection(config.isLeftMotorReversed() ? DcMotor.Direction.REVERSE : DcMotor.Direction.FORWARD);
+                    motorFrontRight.setDirection(config.isRightMotorReversed() ? DcMotor.Direction.REVERSE : DcMotor.Direction.FORWARD);
 
-                motorFrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                motorFrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    motorFrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    motorFrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                }
+            } catch (Exception e) {
+                telemetry.addData("motors", "exception on init: " + e.toString());
+                useMotors = false;
             }
         }
     }
