@@ -67,11 +67,21 @@ public abstract class ChassisStandard extends OpMode {
     protected Servo crab;
     private double crabAngle;
 
+    //Arm
+    private DcMotor crane;
+    //private DcMotor extender;
+    private Servo hand;
+
+    //Succ
+    private DcMotor leftSucc;
+    private DcMotor rightSucc;
+
+
     // Fingers
-    protected Servo fingerFront;
-    protected Servo fingerBack;
-    private double ffAngleHand;
-    private double bfAngleHand;
+    protected Servo fingerLeft;
+    protected Servo fingerRight;
+    private double fingerLeftAngle;
+    private double fingerRightAngle;
 
     // Elevator
     private DcMotor elevator;
@@ -90,6 +100,7 @@ public abstract class ChassisStandard extends OpMode {
     protected boolean useFingers = true;
     protected boolean useVuforia = false;
     protected boolean useMagnets = true;
+    protected boolean useArm = true;
 
 
     protected ChassisStandard() {
@@ -181,10 +192,11 @@ public abstract class ChassisStandard extends OpMode {
 
             if (useFingers) {
                 telemetry.addData("Finger", "%02.1f (%02.1f), %02.1f (%02.1f)",
-                        fingerFront.getPosition(), ffAngleHand, fingerBack.getPosition(), bfAngleHand);
+                       /* fingerLeft.getPosition()*/ -1.0f, fingerLeftAngle, /*fingerRight.getPosition() */ -1.0f, fingerRightAngle);
             } else {
                 telemetry.addData("Finger", "DISABLED");
             }
+
 
             if (useVuforia) {
                 int numStones = 0;
@@ -278,6 +290,54 @@ public abstract class ChassisStandard extends OpMode {
         }
     }
 
+    /*
+    if (useArm) {
+        try {
+            crane = hardwareMap.get(DcMotor.class, "motorCrane");
+            hand = hardwareMap.get(Servo.class, "servoGripper");
+            //  extender = hardwareMap.get(DcMotor.class, "motorExtend");
+
+        } catch (Exception e) {
+            telemetry.addData("Arm", "exception on init: " + e.toString());
+            crane = null;
+            hand = null;
+            //extender = null;
+        }
+        if (crane == null) {
+            telemetry.addData("Arm", "You forgot to set up crane, set up Crane");
+            useArm = false;
+        }
+        if (hand == null) {
+            telemetry.addData("Arm", "You forgot to set up hand, set up the hand");
+            useArm = false;
+        }
+            /*if (extender == null) {
+                telemetry.addData("Arm", "You forgot to set up extender, set up the extender");
+                useArm = false;
+            }
+    }
+
+
+            if (useElevator) {
+        try {
+            elevator = hardwareMap.get(DcMotor.class, "elevator");
+        } catch (Exception e) {
+            telemetry.addData("elevator", "exception on init: " + e.toString());
+            useElevator = false;
+        }
+    }
+
+            if (useSucc) {
+        try {
+            leftSucc = hardwareMap.get(DcMotor.class, "leftSucc");
+            rightSucc = hardwareMap.get(DcMotor.class, "rightSucc");
+
+        } catch (Exception e) {
+            telemetry.addData("Succ", "exception on init: " + e.toString());
+            useElevator = false;
+        }
+    }
+
     protected void initElevator() {
         if (useElevator) {
             try {
@@ -287,14 +347,14 @@ public abstract class ChassisStandard extends OpMode {
                 useElevator = false;
             }
         }
-    }
+    }*/
 
     protected void initFingers() {
         if (useFingers) {
             try {
-                fingerFront = hardwareMap.get(Servo.class, "servoFrontFinger");
+                fingerLeft = hardwareMap.get(Servo.class, "servoLeftFinger");
 
-                fingerBack = hardwareMap.get(Servo.class, "servoBackFinger");
+                fingerRight = hardwareMap.get(Servo.class, "servoRightFinger");
 
             } catch (Exception e) {
                 telemetry.addData("finger", "exception on init: " + e.toString());
@@ -473,29 +533,29 @@ public abstract class ChassisStandard extends OpMode {
 
     public void dropFrontFinger() {
         if (useFingers) {
-            ffAngleHand = 0.0;
-            fingerFront.setPosition(ffAngleHand);
+            fingerLeftAngle = 1.0;
+            fingerLeft.setPosition(fingerLeftAngle);
         }
     }
 
     public void raiseFrontFinger() {
         if (useFingers) {
-            ffAngleHand = 1.0;
-            fingerFront.setPosition(ffAngleHand);
+            fingerLeftAngle = 0.0;
+            fingerLeft.setPosition(fingerLeftAngle);
         }
     }
     
     public void dropBackFinger() {
         if (useFingers) {
-            bfAngleHand = 0.0;
-            fingerBack.setPosition(bfAngleHand);
+            fingerRightAngle = 0.0;
+            fingerRight.setPosition(fingerRightAngle);
         }
     }
 
     public void raiseBackFinger() {
         if (useFingers) {
-            bfAngleHand = 1.0;
-            fingerBack.setPosition(bfAngleHand);
+            fingerRightAngle = 1.0;
+            fingerRight.setPosition(fingerRightAngle);
         }
     }
 
@@ -663,7 +723,7 @@ public abstract class ChassisStandard extends OpMode {
             ElapsedTime sleepTime = new ElapsedTime();
             while (sleepTime.milliseconds() < milliseconds) {
                 Thread.sleep(1);
-                printStatus();
+                //printStatus();
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
