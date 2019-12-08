@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
 /**
  *
  */
-@Autonomous(name="Pick and Park", group="OpMode")
+@Autonomous(name="Pick and Park ", group="OpMode")
 public class     PickAndPark extends ChassisStandard {
 
     public PickAndPark() {
