@@ -17,7 +17,7 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.List;
-
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 public abstract class ChassisStandard extends OpMode {
 
@@ -26,18 +26,18 @@ public abstract class ChassisStandard extends OpMode {
         INIT_STAGE_ARM,
         INIT_STAGE_VUFORIA,
         INIT_STAGE_FINISHED
-    };
+    }
+
+    private static final int NUDGE_TIME = 1;
+    private static final float NUDGE_ANGLE = 10.0f;
 
     // vision detection variables/state
+    private final int SCREEN_WIDTH = 600;
     private static final String TFOD_MODEL_ASSET = "Skystone.tflite";
     private static final String LABEL_FIRST_ELEMENT = "Stone";
     private static final String LABEL_SECOND_ELEMENT = "Skystone";
     private static final String VUFORIA_KEY =
             "AfgOBrf/////AAABmRjMx12ilksPnWUyiHDtfRE42LuceBSFlCTIKmmNqCn2EOk3I4NtDCSr0wCLFxWPoLR2qHKraX49ofQ2JknI76SJS5Hy8cLbIN+1GlFDqC8ilhuf/Y1yDzKN6a4n0fYWcEPlzHRc8C1V+D8vZ9QjoF3r//FDDtm+M3qlmwA7J/jNy4nMSXWHPCn2IUASoNqybTi/CEpVQ+jEBOBjtqxNgb1CEdkFJrYGowUZRP0z90+Sew2cp1DJePT4YrAnhhMBOSCURgcyW3q6Pl10XTjwB4/VTjF7TOwboQ5VbUq0wO3teE2TXQAI53dF3ZUle2STjRH0Rk8H94VtHm9u4uitopFR7zmxVl3kQB565EUHwfvG";
-    protected VuforiaLocalizer vuforia;
-    protected TFObjectDetector tfod;
-    private int lastStones = 0;
-    private int lastSkyStones = 0;
 
     // is sound playing?
     boolean soundPlaying = false;
@@ -46,27 +46,47 @@ public abstract class ChassisStandard extends OpMode {
     protected ChassisConfig config;
     protected boolean madeTheRun = false;
     protected ElapsedTime runtime = new ElapsedTime();
-    private InitStage initStage =  InitStage.INIT_STAGE_START;
+    private InitStage initStage = InitStage.INIT_STAGE_START;
+
+    // vuforia/stone detection stuff
+    protected String stoneconfig;
+    protected VuforiaLocalizer vuforia;
+    protected TFObjectDetector tfod;
+    private int lastStones = 0;
+    private int lastSkyStones = 0;
+    private List<Recognition> lastRecognitions = null;
 
     // Motors
     private DcMotor motorBackLeft;
     private DcMotor motorBackRight;
     private DcMotor motorFrontLeft;
     private DcMotor motorFrontRight;
+    private boolean reverseMotors = false;
 
     // Crab
     protected Servo crab;
     private double crabAngle;
 
+    //Arm
+    private DcMotor crane;
+    //private DcMotor extender;
+    private Servo hand;
+
+    //Succ
+    private DcMotor leftSucc;
+    private DcMotor rightSucc;
+
+
     // Fingers
-    protected Servo fingerFront;
-    protected Servo fingerBack;
-    private double ffAngleHand;
-    private double bfAngleHand;
+    protected Servo fingerLeft;
+    protected Servo fingerRight;
+    private double fingerLeftAngle;
+    private double fingerRightAngle;
 
     // Elevator
     private DcMotor elevator;
     private double angleAnkle;
+    private DigitalChannel elevatorMagnet;
 
     // Gyroscope
     private BNO055IMU bosch;
@@ -79,6 +99,8 @@ public abstract class ChassisStandard extends OpMode {
     protected boolean useElevator = true;
     protected boolean useFingers = true;
     protected boolean useVuforia = false;
+    protected boolean useMagnets = true;
+    protected boolean useArm = true;
 
 
     protected ChassisStandard() {
@@ -87,6 +109,7 @@ public abstract class ChassisStandard extends OpMode {
 
     protected ChassisStandard(ChassisConfig config) {
         this.config = config;
+        stoneconfig = "unknown";
     }
 
      /*
@@ -108,6 +131,7 @@ public abstract class ChassisStandard extends OpMode {
         initMotors();
         initTimeouts();
         initGyroscope();
+        initMagnets();
         initStage = InitStage.INIT_STAGE_ARM;
     }
 
@@ -115,13 +139,13 @@ public abstract class ChassisStandard extends OpMode {
      * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
      */
     @Override
-    public void init_loop () {
+    public void init_loop() {
         switch (initStage) {
             case INIT_STAGE_ARM:
                 initCrab();
                 initFingers();
                 initStage = InitStage.INIT_STAGE_VUFORIA;
-               break;
+                break;
 
             case INIT_STAGE_VUFORIA:
                 initVuforia();
@@ -137,6 +161,9 @@ public abstract class ChassisStandard extends OpMode {
     }
 
 
+    protected void switchMotorDirection() {
+        this.reverseMotors = !this.reverseMotors;
+    }
     /**
      *
      */
@@ -165,10 +192,11 @@ public abstract class ChassisStandard extends OpMode {
 
             if (useFingers) {
                 telemetry.addData("Finger", "%02.1f (%02.1f), %02.1f (%02.1f)",
-                        fingerFront.getPosition(), ffAngleHand, fingerBack.getPosition(), bfAngleHand);
+                       /* fingerLeft.getPosition()*/ -1.0f, fingerLeftAngle, /*fingerRight.getPosition() */ -1.0f, fingerRightAngle);
             } else {
                 telemetry.addData("Finger", "DISABLED");
             }
+
 
             if (useVuforia) {
                 int numStones = 0;
@@ -177,7 +205,7 @@ public abstract class ChassisStandard extends OpMode {
                 if (tfod != null) {
                     // getUpdatedRecognitions() will return null if no new information is available since
                     // the last time that call was made.
-                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+                    List<Recognition> updatedRecognitions = getRecognitions();
                     if (updatedRecognitions == null) {
                         numStones = lastStones;
                         numSkyStones = lastSkyStones;
@@ -217,7 +245,7 @@ public abstract class ChassisStandard extends OpMode {
 
         // Initialize the motors.
         if (useMotors) {
-            try  {
+            try {
                 motorBackLeft = hardwareMap.get(DcMotor.class, "motor0");
                 motorBackRight = hardwareMap.get(DcMotor.class, "motor1");
 
@@ -251,14 +279,62 @@ public abstract class ChassisStandard extends OpMode {
         }
     }
 
-    protected void initCrab(){
-        if(useCrab){
+    protected void initCrab() {
+        if (useCrab) {
             try {
                 crab = hardwareMap.get(Servo.class, "servoCrab");
             } catch (Exception e) {
                 telemetry.addData("crab", "exception on init: " + e.toString());
                 useCrab = false;
             }
+        }
+    }
+
+    /*
+    if (useArm) {
+        try {
+            crane = hardwareMap.get(DcMotor.class, "motorCrane");
+            hand = hardwareMap.get(Servo.class, "servoGripper");
+            //  extender = hardwareMap.get(DcMotor.class, "motorExtend");
+
+        } catch (Exception e) {
+            telemetry.addData("Arm", "exception on init: " + e.toString());
+            crane = null;
+            hand = null;
+            //extender = null;
+        }
+        if (crane == null) {
+            telemetry.addData("Arm", "You forgot to set up crane, set up Crane");
+            useArm = false;
+        }
+        if (hand == null) {
+            telemetry.addData("Arm", "You forgot to set up hand, set up the hand");
+            useArm = false;
+        }
+            /*if (extender == null) {
+                telemetry.addData("Arm", "You forgot to set up extender, set up the extender");
+                useArm = false;
+            }
+    }
+
+
+            if (useElevator) {
+        try {
+            elevator = hardwareMap.get(DcMotor.class, "elevator");
+        } catch (Exception e) {
+            telemetry.addData("elevator", "exception on init: " + e.toString());
+            useElevator = false;
+        }
+    }
+
+            if (useSucc) {
+        try {
+            leftSucc = hardwareMap.get(DcMotor.class, "leftSucc");
+            rightSucc = hardwareMap.get(DcMotor.class, "rightSucc");
+
+        } catch (Exception e) {
+            telemetry.addData("Succ", "exception on init: " + e.toString());
+            useElevator = false;
         }
     }
 
@@ -271,19 +347,23 @@ public abstract class ChassisStandard extends OpMode {
                 useElevator = false;
             }
         }
-    }
+    }*/
 
-    protected void initFingers(){
-        if(useFingers){
+    protected void initFingers() {
+        if (useFingers) {
             try {
-                fingerFront = hardwareMap.get(Servo.class, "servoFrontFinger");
+                fingerLeft = hardwareMap.get(Servo.class, "servoLeftFinger");
 
-                fingerBack = hardwareMap.get(Servo.class, "servoBackFinger");
+                fingerRight = hardwareMap.get(Servo.class, "servoRightFinger");
 
             } catch (Exception e) {
                 telemetry.addData("finger", "exception on init: " + e.toString());
+                sleep(2000);
                 useFingers = false;
             }
+
+            raiseBackFinger();
+            raiseFrontFinger();
         }
     }
 
@@ -318,6 +398,25 @@ public abstract class ChassisStandard extends OpMode {
             return true;
         }
     }
+
+    protected boolean initMagnets() {
+        if (useMagnets) {
+            elevatorMagnet = hardwareMap.get(DigitalChannel.class, "elevatorMagnet");
+            telemetry.addData("Magnet", "class:" + elevatorMagnet.getClass().getName());
+            return true;
+
+
+        } else {
+            useMagnets = false;
+            return false;
+
+        }
+    }
+
+    protected boolean isElevatorMagnetOn() {
+        return !elevatorMagnet.getState();
+    }
+
 
     /* VUFORIA */
 
@@ -369,6 +468,9 @@ public abstract class ChassisStandard extends OpMode {
                 telemetry.addData("vuforia", "exception on init: " + e.toString());
                 useVuforia = false;
             }
+
+            telemetry.addData("StoneDetectLoc", "loc=%s", stoneconfig);
+            printStatus();
         }
     }
 
@@ -386,31 +488,74 @@ public abstract class ChassisStandard extends OpMode {
     }
 
 
+    protected List<Recognition> getRecognitions() {
+        // TODO: use chassis function, dont call getUpdatesRecodgnitions directly.
+        List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+        if (updatedRecognitions == null) {
+            updatedRecognitions = lastRecognitions;
+        }
+        if (updatedRecognitions != null) {
+            lastRecognitions = updatedRecognitions;
+        }
+        return updatedRecognitions;
+    }
+
+    protected void scanStones() {
+        if (tfod != null) {
+            // getUpdatedRecognitions() will return null if no new information is available since
+            // the last time that call was made.
+            // step through the list of recognitions and display boundary info.
+            int i = 0;
+            for (Recognition recognition : getRecognitions()) {
+                telemetry.addData(String.format("StoneDetect label (%d)", i), recognition.getLabel());
+                telemetry.addData(String.format("StoneDetect left,top (%d)", i), "%.03f , %.03f",
+                        recognition.getLeft(), recognition.getTop());
+                telemetry.addData(String.format("StoneDetect right,bottom (%d)", i), "%.03f , %.03f",
+                        recognition.getRight(), recognition.getBottom());
+
+                int offSet = 0;
+                int leftBorder = SCREEN_WIDTH / 3 + offSet;
+                int rightBorder = (int) (SCREEN_WIDTH * 2.0 / 3.0 + offSet);
+
+                if (recognition.getLabel() == "Skystone") {
+                    if (recognition.getLeft() < leftBorder) {
+                        stoneconfig = "LEFT";
+                    } else if (recognition.getLeft() > rightBorder) {
+                        stoneconfig = "RIGHT";
+                    } else {
+                        stoneconfig = "CENTER";
+                    }
+                }
+            }
+        }
+    }
+
+
     public void dropFrontFinger() {
         if (useFingers) {
-            ffAngleHand = 0.0;
-            fingerFront.setPosition(ffAngleHand);
+            fingerLeftAngle = 1.0;
+            fingerLeft.setPosition(fingerLeftAngle);
         }
     }
 
     public void raiseFrontFinger() {
         if (useFingers) {
-            ffAngleHand = 1.0;
-            fingerFront.setPosition(ffAngleHand);
+            fingerLeftAngle = 0.0;
+            fingerLeft.setPosition(fingerLeftAngle);
         }
     }
     
     public void dropBackFinger() {
         if (useFingers) {
-            bfAngleHand = 0.0;
-            fingerBack.setPosition(bfAngleHand);
+            fingerRightAngle = 0.0;
+            fingerRight.setPosition(fingerRightAngle);
         }
     }
 
     public void raiseBackFinger() {
         if (useFingers) {
-            bfAngleHand = 1.0;
-            fingerBack.setPosition(bfAngleHand);
+            fingerRightAngle = 1.0;
+            fingerRight.setPosition(fingerRightAngle);
         }
     }
 
@@ -456,6 +601,11 @@ public abstract class ChassisStandard extends OpMode {
         // Jump out if the motors are turned off.
         if (!useMotors)
             return;
+
+        if (reverseMotors) {
+            leftInches = -leftInches;
+            rightInches = -rightInches;
+        }
 
         double countsPerInch = config.getRearWheelSpeed() / (config.getRearWheelDiameter() * Math.PI);
 
@@ -573,7 +723,7 @@ public abstract class ChassisStandard extends OpMode {
             ElapsedTime sleepTime = new ElapsedTime();
             while (sleepTime.milliseconds() < milliseconds) {
                 Thread.sleep(1);
-                printStatus();
+                //printStatus();
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -627,7 +777,7 @@ public abstract class ChassisStandard extends OpMode {
         }
 
         // turn the last part
-        while ((currentAngle - destinationAngle) > 5.0) {
+        while ((currentAngle - destinationAngle) > NUDGE_ANGLE) {
 
             float oldAngle = currentAngle;
             nudgeLeft();
@@ -679,7 +829,7 @@ public abstract class ChassisStandard extends OpMode {
         }
 
         // turn the last part
-        while ((destinationAngle - currentAngle) > 5.0) {
+        while ((destinationAngle - currentAngle) > NUDGE_ANGLE) {
 
             float oldAngle = currentAngle;
             nudgeRight();
@@ -711,8 +861,16 @@ public abstract class ChassisStandard extends OpMode {
             motorFrontLeft.setPower(power);
             motorFrontRight.setPower(-power);
         }
-        sleep(5);
+        sleep(NUDGE_TIME);
+        //turn off the motor
+        motorBackLeft.setPower(0);
+        motorBackRight.setPower(0);
+        if (config.getUseFourWheelDrive()) {
+            motorFrontLeft.setPower(0);
+            motorFrontRight.setPower(0);
+        }
     }
+
 
     // This nudges over about 2 degrees.
     protected void nudgeLeft() {
@@ -724,7 +882,14 @@ public abstract class ChassisStandard extends OpMode {
             motorFrontLeft.setPower(-power);
             motorFrontRight.setPower(power);
         }
-        sleep(5);
+        sleep(NUDGE_TIME);
+        //turn off the motor
+        motorBackLeft.setPower(0);
+        motorBackRight.setPower(0);
+        if (config.getUseFourWheelDrive()) {
+            motorFrontLeft.setPower(0);
+            motorFrontRight.setPower(0);
+        }
     }
 
 
