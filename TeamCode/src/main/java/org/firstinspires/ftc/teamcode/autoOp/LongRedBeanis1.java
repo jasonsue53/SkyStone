@@ -22,7 +22,7 @@ public abstract class LongRedBeanis1 extends ChassisStandard {
 
             encoderDrive(27);
 
-            turnRight(85);
+            turnRight(95);
             encoderDrive(13);
             madeTheRun = true;
         }

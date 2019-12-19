@@ -22,7 +22,7 @@ public abstract class ShortBlueHagrids2 extends ChassisStandard {
 
             encoderDrive(5);
 
-            turnRight(90);
+            turnRight(95);
             encoderDrive(35);
             madeTheRun = true;
         }

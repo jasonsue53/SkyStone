@@ -61,7 +61,7 @@ public abstract class ShortRedHagrids2 extends ChassisStandard {
 
             encoderDrive(5);
 
-            turnLeft(90);
+            turnLeft(95);
             encoderDrive(35);
             madeTheRun = true;
         }

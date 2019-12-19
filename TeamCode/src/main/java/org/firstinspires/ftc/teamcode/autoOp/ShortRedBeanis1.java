@@ -22,7 +22,7 @@ public abstract class ShortRedBeanis1 extends ChassisStandard {
 
            encoderDrive(4);
 
-            turnRight(85);
+            turnRight(95);
 
             encoderDrive(13);
 
