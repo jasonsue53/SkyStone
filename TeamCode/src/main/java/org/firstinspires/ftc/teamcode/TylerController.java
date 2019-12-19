@@ -55,6 +55,10 @@ public class TylerController extends OpMode {
     private DcMotor leftSucc;
     private DcMotor rightSucc;
 
+
+    private Servo leftFinger;
+    private Servo rightFinger;
+
     // Crab state.
     private Servo crab;
     private DigitalChannel digitalTouch;
@@ -118,10 +122,11 @@ public class TylerController extends OpMode {
     private int craneTargetPosition = 0;
     private boolean craneUseTargetPosition = false;
 
+
     // Constants
     private static final int ELEVATOR_HIGH = 17800;                                                 // Not using magnet during League 2
     private static final int ELEVATOR_LOW = 0;
-    private static int ELEVATOR_FUDGE = 50;
+    private static int ELEVATOR_FUDGE = 25;
     private static final int[] ELEVATOR_LEVELS = {0, 2500, 3700, 3700, 5800, 8500, 11800, 17100, 99000};
 
     private static final int[] CRANE_POSITIONS = {0, 1000};
@@ -188,6 +193,9 @@ public class TylerController extends OpMode {
         if (useArm) {
             try {
                 crane = hardwareMap.get(DcMotor.class, "motorCrane");
+                crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                crane.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
                 hand = hardwareMap.get(CRServo.class, "servoGripper");
               //  extender = hardwareMap.get(DcMotor.class, "motorExtend");
 
@@ -246,6 +254,8 @@ public class TylerController extends OpMode {
         if (useElevator) {
             try {
                 elevator = hardwareMap.get(DcMotor.class, "elevator");
+                elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                elevator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             } catch (Exception e) {
                 telemetry.addData("elevator", "exception on init: " + e.toString());
                 useElevator = false;
@@ -548,6 +558,7 @@ public class TylerController extends OpMode {
             // Control the crane.
             double cranePowerFactor = 0.5;
             double cranePower = 0.0;
+
             int cranePosition = crane.getCurrentPosition();
 
             // ---CONTROLLER 2
@@ -561,12 +572,12 @@ public class TylerController extends OpMode {
             }
 
             // ---CONTROLLER 1
-            if (gamepad1.dpad_down && cranePosition - CRANE_FUDGE > CRANE_POSITIONS[0]) {               // Ignore input if crane is already all the way back
+            if (gamepad1.dpad_down) {               // Ignore input if crane is already all the way back
                 cranePower = -cranePowerFactor;                                                         // Operator 1 is moving crane so move at slower speed for small adjustments
                 craneUseTargetPosition = false;                                                         // Cancel operator 2's input if operator 1 is using the crane
             }
 
-            if (gamepad1.dpad_up && cranePosition + CRANE_FUDGE < CRANE_POSITIONS[1]) {                 // Ignore input if crane is already all the way out
+            if (gamepad1.dpad_up ) {                 // Ignore input if crane is already all the way out
                 cranePower = cranePowerFactor;                                                          // Operator 1 is moving crane so move at slower speed for small adjustments
                 craneUseTargetPosition = false;                                                         // Cancel operator 2's input if operator 1 is using the crane
             }
@@ -576,7 +587,10 @@ public class TylerController extends OpMode {
             if (cranePosition - CRANE_FUDGE >= craneTargetPosition && craneUseTargetPosition)           // If crane position is higher than target position and we're respecting operator 2's input
                 cranePower = -cranePowerFactor;                                                         // Crane is moving to set position so get there as fast as possible
 
-            crane.setPower(cranePower);                                                            // Set power determined above to motor
+            crane.setPower(cranePower);
+            telemetry.addData("Crane:", cranePosition);
+
+            // Set power determined above to motor
 
             // *** HAND ***
             double handPowerFactor = 1.0;
@@ -653,12 +667,15 @@ public class TylerController extends OpMode {
 
        }
 
+
+
         if (useCrab) {
+
             if (gamepad1.b) {
-                raiseCrab();
-            }
-            else{
                 dropCrab();
+            }
+            if(gamepad1.x){
+                raiseCrab();
             }
         }
 
