@@ -14,7 +14,7 @@ public class PickAndParkRed extends ChassisStandard {
     public PickAndParkRed() {
         // override the default of vuforia being off.
         useVuforia = true;
-
+        madeTheRun = false;
         // need this for tyler 2 chassis
        // switchMotorDirection();
     }
@@ -75,9 +75,9 @@ public class PickAndParkRed extends ChassisStandard {
 
             }
             //NOT TESTED - DOESN'T WORK
-            else if (stoneconfig == "RIGHT") {
+            else {
 
-                encoderDrive(6);
+                /*encoderDrive(6);
                 turnRight(45);
                 encoderDrive(20);
                 turnLeft(38);
@@ -92,6 +92,22 @@ public class PickAndParkRed extends ChassisStandard {
                 turnRight(95);
                 sleep(500);
                 encoderDrive(45);
+                sleep(500);
+                raiseBackFinger();
+                sleep(2000);
+                encoderDrive(-24);*/
+                encoderDrive(30);
+                sleep(500);
+
+                sleep(500);
+                dropBackFinger();
+                sleep(2000);
+
+                encoderDrive(-5);
+                sleep(500);
+                turnRight(95);
+                sleep(500);
+                encoderDrive(60);
                 sleep(500);
                 raiseBackFinger();
                 sleep(2000);
