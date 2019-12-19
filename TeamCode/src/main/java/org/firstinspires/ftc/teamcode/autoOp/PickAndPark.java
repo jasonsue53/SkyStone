@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
 /**
  *
  */
-@Autonomous(name="Pick and Park ", group="OpMode")
+@Autonomous(name="Pick and Park Red", group="OpMode")
 public class     PickAndPark extends ChassisStandard {
 
     public PickAndPark() {
@@ -42,36 +42,38 @@ public class     PickAndPark extends ChassisStandard {
                 sleep(500);
                 raiseFrontFinger();
                 sleep(2000);
-                encoderDrive(-24);
+                encoderDrive(-26);
 
 
             } else if (stoneconfig =="CENTER") {
 
-                encoderDrive(6);
+                /*encoderDrive(6);
                 turnRight(45);
                 encoderDrive(8);
                 turnLeft(42);
-                encoderDrive(19);
+                encoderDrive(19);*/
+
+                encoderDrive(30);
+                sleep(500);
 
 
                 sleep(500);
-
-                dropFrontFinger();
-                 sleep(2000);
+                dropBackFinger();
+                sleep(2000);
 
                 encoderDrive(-5);
                 sleep(500);
-                turnRight(85);
+                turnRight(95);
                 sleep(500);
                 encoderDrive(60);
                 sleep(500);
-                raiseFrontFinger();
+                raiseBackFinger();
                 sleep(2000);
-                encoderDrive(-24);
+                encoderDrive(-26);
 
             } else if (stoneconfig == "RIGHT") {
 
-                encoderDrive(6);
+                /*encoderDrive(6);
                 turnRight(45);
                 encoderDrive(20);
                 turnLeft(38);
@@ -90,7 +92,25 @@ public class     PickAndPark extends ChassisStandard {
                 sleep(500);
                 raiseFrontFinger();
                 sleep(2000);
-                encoderDrive(-24);
+                encoderDrive(-24);*/
+
+                encoderDrive(30);
+                sleep(500);
+
+
+                sleep(500);
+                dropBackFinger();
+                sleep(2000);
+
+                encoderDrive(-5);
+                sleep(500);
+                turnRight(95);
+                sleep(500);
+                encoderDrive(60);
+                sleep(500);
+                raiseBackFinger();
+                sleep(2000);
+                encoderDrive(-26);
             }
 
             madeTheRun = true;
