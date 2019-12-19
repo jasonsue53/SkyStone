@@ -7,6 +7,7 @@ import com.disnodeteam.dogecv.detectors.skystone.SkystoneDetector;
 import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -48,7 +49,7 @@ public class TylerController extends OpMode {
     //Arm
     private DcMotor crane;
     //private DcMotor extender;
-    private Servo hand;
+    private CRServo hand;
 
     //Succ
     private DcMotor leftSucc;
@@ -104,6 +105,27 @@ public class TylerController extends OpMode {
     //elevator
     private DigitalChannel elevatorMagnet;
     protected boolean useMagnets = true;
+
+    private boolean startLastPos = false;
+    private boolean g2yLastPos = false;
+    private double timeUpLevel = 0.0;
+    private boolean crabUp = true;
+
+    private int elevatorTargetLevel = 0;
+   // private boolean elevatorCalibrated = false;
+    private int elevatorCurrentLevel = 0;
+
+    private int craneTargetPosition = 0;
+    private boolean craneUseTargetPosition = false;
+
+    // Constants
+    private static final int ELEVATOR_HIGH = 17800;                                                 // Not using magnet during League 2
+    private static final int ELEVATOR_LOW = 0;
+    private static int ELEVATOR_FUDGE = 50;
+    private static final int[] ELEVATOR_LEVELS = {0, 2500, 3700, 3700, 5800, 8500, 11800, 17100, 99000};
+
+    private static final int[] CRANE_POSITIONS = {0, 1000};
+    private static final int CRANE_FUDGE = 50;
 
     /**
      * Code to run ONCE when the driver hits INIT
@@ -166,7 +188,7 @@ public class TylerController extends OpMode {
         if (useArm) {
             try {
                 crane = hardwareMap.get(DcMotor.class, "motorCrane");
-                hand = hardwareMap.get(Servo.class, "servoGripper");
+                hand = hardwareMap.get(CRServo.class, "servoGripper");
               //  extender = hardwareMap.get(DcMotor.class, "motorExtend");
 
             } catch (Exception e) {
@@ -211,6 +233,7 @@ public class TylerController extends OpMode {
                 telemetry.addData("Touch", "exception on init: " + e.toString());
                 digitalTouch = null;
             }
+
 
             if (digitalTouch == null) {
                 telemetry.addData("Touch", "You forgot to set up sensorTouch, set up ");
@@ -320,6 +343,25 @@ public class TylerController extends OpMode {
      */
     @Override
     public void init_loop() {
+        /*if (elevatorMagnet.getState() == false) {
+            elevator.setPower(0.0);
+            elevatorCalibrated = true;
+            elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            elevator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+
+        if (!elevatorCalibrated) {                  // Keep moving up
+            elevator.setPower(-.25);
+        }
+        else {                                      // Move down until position is
+
+        }
+
+        telemetry.addData("IsCalibrated", elevatorCalibrated);
+        telemetry.addData("Elevator Height", "%7d",
+                elevatorMotor.getCurrentPosition());
+*/
+
     }
 
     /**
@@ -327,7 +369,7 @@ public class TylerController extends OpMode {
      */
     @Override
     public void start() {
-
+       // runtime.reset();
     }
 
     /**
@@ -504,58 +546,111 @@ public class TylerController extends OpMode {
             }*/
 
             // Control the crane.
-            boolean suckOut = gamepad1.dpad_up;
-            boolean suckIn = gamepad1.dpad_down;
-            if (suckOut != false) {
-                crane.setPower(1.0);
-            } else if (suckIn != false) {
-                crane.setPower(-1.0);
-            } else {
-                crane.setPower(0);
+            double cranePowerFactor = 0.5;
+            double cranePower = 0.0;
+            int cranePosition = crane.getCurrentPosition();
+
+            // ---CONTROLLER 2
+            if (gamepad2.dpad_down) {
+                craneTargetPosition = CRANE_POSITIONS[0];
+                craneUseTargetPosition = true;                                                          // Use operator 2's instruction
+            }
+            if (gamepad2.dpad_up) {
+                craneTargetPosition = CRANE_POSITIONS[1];
+                craneUseTargetPosition = true;                                                          // Use operator 2's instruction
             }
 
-
-            /*if(gamepad1.right_trigger){
-                crane.setPower(1);
-            }else if (gamepad1.left_trigger){
-                crane.setPower(-1);
-            }else{
-                crane.setPower(0);
-            }*/
-
-            boolean closeHand = gamepad1.dpad_right;
-            boolean openHand = gamepad1.dpad_left;
-            if (closeHand) {
-                hand.setPosition(1);
-            } else if (openHand) {
-                hand.setPosition(-1);
+            // ---CONTROLLER 1
+            if (gamepad1.dpad_down && cranePosition - CRANE_FUDGE > CRANE_POSITIONS[0]) {               // Ignore input if crane is already all the way back
+                cranePower = -cranePowerFactor;                                                         // Operator 1 is moving crane so move at slower speed for small adjustments
+                craneUseTargetPosition = false;                                                         // Cancel operator 2's input if operator 1 is using the crane
             }
+
+            if (gamepad1.dpad_up && cranePosition + CRANE_FUDGE < CRANE_POSITIONS[1]) {                 // Ignore input if crane is already all the way out
+                cranePower = cranePowerFactor;                                                          // Operator 1 is moving crane so move at slower speed for small adjustments
+                craneUseTargetPosition = false;                                                         // Cancel operator 2's input if operator 1 is using the crane
+            }
+
+            if (cranePosition + CRANE_FUDGE <= craneTargetPosition && craneUseTargetPosition)           // If crane position is lower than target position and we're respecting operator 2's input
+                cranePower = 1.0;                                                                       // Crane is moving to set position so get there as fast as possible
+            if (cranePosition - CRANE_FUDGE >= craneTargetPosition && craneUseTargetPosition)           // If crane position is higher than target position and we're respecting operator 2's input
+                cranePower = -cranePowerFactor;                                                         // Crane is moving to set position so get there as fast as possible
+
+            crane.setPower(cranePower);                                                            // Set power determined above to motor
+
+            // *** HAND ***
+            double handPowerFactor = 1.0;
+            double handPower = 0.0;
+
+            if (gamepad1.dpad_left || gamepad1.dpad_right) {                                            // Check for hand input from operator 1
+                if (gamepad1.dpad_left)                                                                 //
+                    handPower = -handPowerFactor;                                                       // Open hand
+                if (gamepad1.dpad_right)
+                    handPower = handPowerFactor;                                                        // Close hand
+            } else {                                                                                    // If operator 1 isn't using the hand let operator 2 use it
+                if (gamepad2.dpad_left)
+                    handPower = -handPowerFactor;                                                       // Open hand
+                if (gamepad2.dpad_right)
+                    handPower = handPowerFactor;                                                        // Close hand
+            }
+            hand.setPower(handPower);                                                              // Set power determined above to hand CR Servo
+
 
             //telemetry.addData("Extender", "start: %d, curr: %d, target: %d, armState: %d", extenderStartPostion, extender.getCurrentPosition(), extenderTarget, armState);
         }
 
        if (useElevator) {
-           boolean liftAllIn = gamepad1.a;
-           boolean liftAllOut = gamepad1.y;
-           if (liftAllOut) {
-               startElevatorMoving(elevatorStartPosition + 4500);
-           } else if (liftAllIn) {
-               startElevatorMoving(elevatorStartPosition);
+           // *** ELEVATOR ***
+           double elevatorPowerFactor = 1.0;                                                           // Speed we want elevator to move at when being manually controlled for fine tuning height
+           double elevatorPower = 0.0;                                                                 // Initialize to zero as the default power level and then determine below if we need to move
+           int elevatorPosition = -elevator.getCurrentPosition();                                 // Get current position and flip from negative to positive to make logic more readable
+
+           // ---CONTROLLER 2
+           // Find current level
+           boolean levelFound = false;
+           elevatorCurrentLevel = 0;                                                                   // Start at the bottom and increment up until we find where we are
+           while (!levelFound) {
+               if (elevatorPosition > ELEVATOR_LEVELS[elevatorCurrentLevel])
+                   elevatorCurrentLevel++;
+               else
+                   levelFound = true;
            }
+
+           if (gamepad2.y != g2yLastPos) {                                                             // Check to see if operator 2's y button is in a new state
+               if (g2yLastPos && elevatorTargetLevel < ELEVATOR_LEVELS.length)                         // If the y button is pressed and we haven't reached our top level increment our target level
+                   elevatorTargetLevel++;
+               g2yLastPos = !g2yLastPos;                                                               // Toggle our known y button state
+           }
+
+           if (gamepad2.a && elevatorPosition - ELEVATOR_FUDGE >= ELEVATOR_LOW) {                      // If operator 2's A button is pressed and we aren't already at the bottom
+               elevatorPower = 1.0;                                                                    // Set power to move elevator down at maximum speed
+               elevatorTargetLevel = elevatorCurrentLevel;                                             // Override any previously sent up commands from operator 2
+           }
+           if (elevatorCurrentLevel < elevatorTargetLevel)                                             // If our current level is lower than our target level
+               elevatorPower = -1.0;                                                                   // Move up at maximum speed
+
+           // ---CONTROLLER 1
+           if (gamepad1.y && elevatorPosition + ELEVATOR_FUDGE <= ELEVATOR_HIGH) {                     // Operator 1's Y is pressed and we haven't reached our maximum height
+               elevatorPower = -elevatorPowerFactor;                                                   // Move up at a controllable speed
+               elevatorTargetLevel = elevatorCurrentLevel;                                             // Turn off any input from operator 2
+           }
+           if (gamepad1.a && elevatorPosition - ELEVATOR_FUDGE >= ELEVATOR_LOW) {                      // Operator 1's A is pressed and we haven't reached the bottom
+               elevatorPower = elevatorPowerFactor;                                                    // Move down at a controllable speed
+               elevatorTargetLevel = elevatorCurrentLevel;                                             // Turn off any input from operator 2
+           }
+
+           elevator.setPower(elevatorPower);                                                      // Set direction and power determined above to the motor
+
        }
 
        if (useSucc){
-           float succIn = gamepad1.right_trigger;
-           boolean succOut = gamepad1.right_bumper;
-           if (succIn == 1) {
-               leftSucc.setPower(-1.0);
-               rightSucc.setPower(1.0);
-
-           } else if (succOut) {
-               leftSucc.setPower(1.0);
-               rightSucc.setPower(-1.0);
-
+           double suckerPower = gamepad1.right_trigger;
+           if (gamepad1.right_bumper) {
+               suckerPower = -1;
            }
+           rightSucc.setPower(suckerPower);
+           leftSucc.setPower(suckerPower);
+
        }
 
         if (useCrab) {
