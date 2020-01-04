@@ -29,7 +29,8 @@ public abstract class ChassisStandard extends OpMode {
     }
 
     private static final int NUDGE_TIME = 1;
-    private static final float NUDGE_ANGLE = 10.0f;
+    private static final float NUDGE_ANGLE = 4.0f;
+    private static final float NORMALIZE_ANGLE = 360.0f;
 
     // vision detection variables/state
     private final int SCREEN_WIDTH = 600;
@@ -62,6 +63,10 @@ public abstract class ChassisStandard extends OpMode {
     private DcMotor motorFrontLeft;
     private DcMotor motorFrontRight;
     private boolean reverseMotors = false;
+    private String motorTurnType = "none";
+    private float motorTurnDestination = 0.0f;
+    private float motorTurnAngleToGo = 0.0f;
+    private float motorTurnAngleAdjustedToGo = 0.0f;
 
     // Crab
     protected Servo crab;
@@ -160,14 +165,31 @@ public abstract class ChassisStandard extends OpMode {
         printStatus();
     }
 
+    @Override
+    public void loop () {
+
+        if (madeTheRun == false) {
+           makeTheRun();
+           madeTheRun = true;
+        }
+
+        printStatus();
+    }
+
+    public void makeTheRun () {
+        // Override this in a base class!
+    }
+
 
     protected void switchMotorDirection() {
         this.reverseMotors = !this.reverseMotors;
     }
+
     /**
      *
      */
     protected void printStatus() {
+
         if (initStage == InitStage.INIT_STAGE_FINISHED) {
             if (useGyroScope) {
                 telemetry.addData("Gyro", "angle: " + this.getGyroscopeAngle());
@@ -180,6 +202,8 @@ public abstract class ChassisStandard extends OpMode {
                         motorFrontLeft.getPower(), motorFrontLeft.getCurrentPosition(), motorFrontRight.getPower(), motorFrontRight.getCurrentPosition());
                 telemetry.addData("Motor: back", "left:%02.1f, (%d), rigt: %02.1f, (%d)",
                         motorBackLeft.getPower(), motorBackLeft.getCurrentPosition(), motorBackRight.getPower(), motorBackRight.getCurrentPosition());
+                telemetry.addData("Motor: turn", "type=%s, now: %02.1f, dest: %02.1f, togo= %02.1f, togo2= %02.1f",
+                        motorTurnType, this.getGyroscopeAngle(), motorTurnDestination, motorTurnAngleToGo, motorTurnAngleAdjustedToGo);
             } else {
                 telemetry.addData("Motor", "DISABLED");
             }
@@ -254,11 +278,15 @@ public abstract class ChassisStandard extends OpMode {
                 motorBackLeft.setDirection(config.isLeftMotorReversed() ? DcMotor.Direction.REVERSE : DcMotor.Direction.FORWARD);
                 motorBackRight.setDirection(config.isRightMotorReversed() ? DcMotor.Direction.REVERSE : DcMotor.Direction.FORWARD);
 
-                // initilize the encoder
+                // initialize the encoder
                 motorBackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 motorBackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                //motorBackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+               // motorBackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                motorBackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+                motorBackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
                 if (config.getUseFourWheelDrive()) {
                     motorFrontLeft = hardwareMap.get(DcMotor.class, "motor2");
@@ -271,6 +299,8 @@ public abstract class ChassisStandard extends OpMode {
                     motorFrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+                    motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
                 }
             } catch (Exception e) {
                 telemetry.addData("motors", "exception on init: " + e.toString());
@@ -714,7 +744,7 @@ public abstract class ChassisStandard extends OpMode {
                 rightBackTarget,
                 leftFrontTarget,
                 rightFrontTarget); */
-        sleep(100);
+       // sleep(100);
     }
 
 
@@ -723,7 +753,7 @@ public abstract class ChassisStandard extends OpMode {
             ElapsedTime sleepTime = new ElapsedTime();
             while (sleepTime.milliseconds() < milliseconds) {
                 Thread.sleep(1);
-                //printStatus();
+                printStatus();
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -746,6 +776,64 @@ public abstract class ChassisStandard extends OpMode {
     }
 
 
+
+
+     /*   protected void turnLeftAbsolute (float destinationAngle){
+            boolean doesItWrapAtAll = (destinationAngle < 0.0);
+            destinationAngle = CrazyAngle.normalizeAngle(destinationAngle);
+            float currentAngle = getGyroscopeAngle();
+
+            // Get it past the zero mark.
+            if (doesItWrapAtAll) {
+                boolean keepGoing = true;
+                while (keepGoing) {
+                    float oldAngle = currentAngle;
+                    nudgeLeft();
+                    currentAngle = getGyroscopeAngle();
+
+                    float justMoved = oldAngle - currentAngle;
+                    float stillNeed = currentAngle;
+                    telemetry.addData("turnLeft1", "current=%.0f, old=%.0f, dst=%.0f, moved=%.0f, need=%.0f", currentAngle, oldAngle, destinationAngle, justMoved, stillNeed);
+                    telemetry.update();
+
+                    keepGoing = (justMoved > -50.0);
+                }
+            }
+
+            // turn the last part
+            while ((currentAngle - destinationAngle) > NUDGE_ANGLE) {
+
+                float oldAngle = currentAngle;
+                nudgeLeft();
+                currentAngle = getGyroscopeAngle();
+
+                float justMoved = oldAngle - currentAngle;
+                float stillNeed = currentAngle - destinationAngle;
+                telemetry.addData("turnLeft2", "current = %.0f, destination = %.0f, moved=%.0f, need=%.0f", currentAngle, destinationAngle, justMoved, stillNeed);
+                telemetry.update();
+            }
+
+            // turn off motor.
+            motorBackLeft.setPower(0);
+            motorBackRight.setPower(0);
+            if (config.getUseFourWheelDrive()) {
+                motorFrontLeft.setPower(0);
+                motorFrontRight.setPower(0);
+            }
+        } */
+
+    /**
+     * @param deltaAngle must be between 0 and 359.9
+     */
+    protected void turnRight(float deltaAngle) {
+        assert (deltaAngle > 0.0);
+        assert (deltaAngle <= 360.0);
+
+        float currentAngle = getGyroscopeAngle();
+        float destinationAngle = currentAngle + deltaAngle;
+        turnRightAbsolute(destinationAngle);
+    }
+
     /**
      * @param deltaAngle
      */
@@ -753,116 +841,214 @@ public abstract class ChassisStandard extends OpMode {
         assert (deltaAngle > 0.0);
         assert (deltaAngle <= 360.0);
 
-        // does it wrap at all? (go around the zero mark?)
         float currentAngle = getGyroscopeAngle();
         float destinationAngle = currentAngle - deltaAngle;
-        boolean doesItWrapAtAll = (destinationAngle < 0.0);
-        destinationAngle = CrazyAngle.normalizeAngle(destinationAngle);
-
-        // Get it past the zero mark.
-        if (doesItWrapAtAll) {
-            boolean keepGoing = true;
-            while (keepGoing) {
-                float oldAngle = currentAngle;
-                nudgeLeft();
-                currentAngle = getGyroscopeAngle();
-
-                float justMoved = oldAngle - currentAngle;
-                float stillNeed = currentAngle;
-                telemetry.addData("turnLeft1", "current=%.0f, old=%.0f, dst=%.0f, moved=%.0f, need=%.0f", currentAngle, oldAngle, destinationAngle, justMoved, stillNeed);
-                telemetry.update();
-
-                keepGoing = (justMoved > -50.0);
-            }
-        }
-
-        // turn the last part
-        while ((currentAngle - destinationAngle) > NUDGE_ANGLE) {
-
-            float oldAngle = currentAngle;
-            nudgeLeft();
-            currentAngle = getGyroscopeAngle();
-
-            float justMoved = oldAngle - currentAngle;
-            float stillNeed = currentAngle - destinationAngle;
-            telemetry.addData("turnLeft2", "current = %.0f, destination = %.0f, moved=%.0f, need=%.0f", currentAngle, destinationAngle, justMoved, stillNeed);
-            telemetry.update();
-        }
-
-        // turn off motor.
-        motorBackLeft.setPower(0);
-        motorBackRight.setPower(0);
-        if (config.getUseFourWheelDrive()) {
-            motorFrontLeft.setPower(0);
-            motorFrontRight.setPower(0);
-        }
+        turnLeftAbsolute(destinationAngle);
     }
 
-    /**
-     * @param deltaAngle
-     */
-    protected void turnRight(float deltaAngle) {
-        assert (deltaAngle > 0.0);
-        assert (deltaAngle <= 360.0);
-
-        // does it wrap at all?
-        float currentAngle = getGyroscopeAngle();
-        float destinationAngle = currentAngle + deltaAngle;
-        boolean doesItWrapAtAll = (destinationAngle > 360.0);
-        destinationAngle = CrazyAngle.normalizeAngle(destinationAngle);
-
-        // Get it past the zero mark.
-        if (doesItWrapAtAll) {
-            boolean keepGoing = true;
-            while (keepGoing) {
-                float oldAngle = currentAngle;
-                nudgeRight();
-                currentAngle = getGyroscopeAngle();
-
-                float justMoved = currentAngle - oldAngle;
-                float stillNeed = 360.0f - currentAngle;
-                telemetry.addData("turRight1", "current=%.0f, old=%.0f, dst=%.0f, moved=%.0f, need=%.0f", currentAngle, oldAngle, destinationAngle, justMoved, stillNeed);
-                telemetry.update();
-
-                keepGoing = (justMoved > -50.0);
-            }
+    private float calculateRightDiff(float measuredDiff) {
+        float ret = measuredDiff;
+        while (ret < 0) {
+            ret += 360.0;
         }
+        return ret;
+    }
 
-        // turn the last part
-        while ((destinationAngle - currentAngle) > NUDGE_ANGLE) {
+    private float calculateLeftDiff(float measuredDiff) {
+        float ret = measuredDiff;
+        while (ret > 0) {
+            ret -= 360.0;
+        }
+        return -ret;
+    }
 
-            float oldAngle = currentAngle;
-            nudgeRight();
+    protected void  turnRightAbsolutePid(float destinationAngle) {
+
+        destinationAngle = CrazyAngle.normalizeAngle(destinationAngle); // between 0.0-359.999
+        float currentAngle = getGyroscopeAngle(); // between 0.0-359.999
+        double baseSpeed = config.getTurnSpeed();
+
+        // destinationDiffAngle is going to tbe the number of degrees we still need to turn. Note tht if we have to transition over
+        // the 360->0 boundary, then this number will be negative.
+        float destinationDiffAngle = (destinationAngle - currentAngle);
+        float diffRight = calculateRightDiff(destinationDiffAngle);
+        float diffLeft = calculateLeftDiff(destinationDiffAngle);
+
+        // Init debug info for printStatus().
+        motorTurnType = "right";
+        motorTurnDestination = destinationAngle;
+        motorTurnAngleToGo = destinationDiffAngle;
+        motorTurnAngleAdjustedToGo = diffRight;
+
+        PIDController pidRotate =  new PIDController(.003, .00003, 0);
+        pidRotate.reset();
+        pidRotate.setSetpoint(0);
+        pidRotate.setInputRange(0, diffRight);
+        pidRotate.setOutputRange(0.4, baseSpeed);
+        pidRotate.setTolerance(1);
+        pidRotate.enable();
+
+        // we continue in this loop as long as we still need to transition over the 360->0 boundary, or until we are within NUDGE_ANGLE degrees of the target.
+        //while ((diffLeft > NUDGE_ANGLE) && (diffRight > NUDGE_ANGLE)) {
+        while (!pidRotate.onTarget()) {
+            double oldAngle = currentAngle;
+
+            double currentPower = pidRotate.performPID(diffRight);
+            nudgeRight(currentPower);
 
             currentAngle = getGyroscopeAngle();
-
-            float justMoved = currentAngle - oldAngle;
-            float stillNeed = destinationAngle - currentAngle;
-            telemetry.addData("turnRight2", "current = %.0f, destination = %.0f, moved=%.0f, need=%.0f", currentAngle, destinationAngle, justMoved, stillNeed);
-            telemetry.update();
+            destinationDiffAngle = (destinationAngle - currentAngle);
+            diffRight = calculateRightDiff(destinationDiffAngle);
+            diffLeft = calculateLeftDiff(destinationDiffAngle);
+           // motorTurnAngleToGo = destinationDiffAngle;
+           // motorTurnAngleAdjustedToGo = diffRight;
+            motorTurnAngleAdjustedToGo = (float) currentPower;
         }
 
-        //turn off the motor
+        // Turn off the motor.
         motorBackLeft.setPower(0);
         motorBackRight.setPower(0);
         if (config.getUseFourWheelDrive()) {
             motorFrontLeft.setPower(0);
             motorFrontRight.setPower(0);
         }
+
+        // Turn off debug info.
+        motorTurnType = "right";
+        motorTurnDestination = destinationAngle;
+        motorTurnAngleToGo = destinationDiffAngle;
+        motorTurnAngleAdjustedToGo = diffRight;
+    }
+
+    protected void  turnRightAbsolute(float destinationAngle) {
+        destinationAngle = CrazyAngle.normalizeAngle(destinationAngle); // between 0.0-359.999
+        float currentAngle = getGyroscopeAngle(); // between 0.0-359.999
+
+        // destinationDiffAngle is going to tbe the number of degrees we still need to turn. Note tht if we have to transition over
+        // the 360->0 boundary, then this number will be negative.
+        float destinationDiffAngle = (destinationAngle - currentAngle);
+        float diffRight = calculateRightDiff(destinationDiffAngle);
+        float diffLeft = calculateLeftDiff(destinationDiffAngle);
+
+        // Init debug info for printStatus().
+        motorTurnType = "right";
+        motorTurnDestination = destinationAngle;
+        motorTurnAngleToGo = destinationDiffAngle;
+        motorTurnAngleAdjustedToGo = diffRight;
+
+        // we continue in this loop as long as we still need to transition over the 360->0 boundary, or until we are within NUDGE_ANGLE degrees of the target.
+        while ((diffLeft > NUDGE_ANGLE) && (diffRight > NUDGE_ANGLE)) {
+            float oldAngle = currentAngle;
+
+            double power = config.getTurnSpeed();
+            if (diffRight < (NUDGE_ANGLE * 5))
+                power *= 0.5;
+            else if (diffRight < (NUDGE_ANGLE * 3))
+                power *= 0.3;
+            nudgeRight(power);
+
+            currentAngle = getGyroscopeAngle();
+            destinationDiffAngle = (destinationAngle - currentAngle);
+            diffRight = calculateRightDiff(destinationDiffAngle);
+            diffLeft = calculateLeftDiff(destinationDiffAngle);
+            motorTurnAngleToGo = destinationDiffAngle;
+            motorTurnAngleAdjustedToGo = diffRight;
+        }
+
+        // Turn off the motor.
+        motorBackLeft.setPower(0);
+        motorBackRight.setPower(0);
+        if (config.getUseFourWheelDrive()) {
+            motorFrontLeft.setPower(0);
+            motorFrontRight.setPower(0);
+        }
+
+        // Turn off debug info.
+        motorTurnType = "none";
+        motorTurnDestination = 0.0f;
+        motorTurnAngleToGo = 0.0f;
+        motorTurnAngleAdjustedToGo = 0.0f;
+    }
+
+    protected void  turnLeftAbsolute(float destinationAngle) {
+        destinationAngle = CrazyAngle.normalizeAngle(destinationAngle); // between 0.0-359.999
+        float currentAngle = getGyroscopeAngle(); // between 0.0-359.999
+
+        // destinationDiffAngle is going to tbe the number of degrees we still need to turn. Note tht if we have to transition over
+        // the 360->0 boundary, then this number will be negative.
+        float destinationDiffAngle = (destinationAngle - currentAngle);
+        float diffRight = calculateRightDiff(destinationDiffAngle);
+        float diffLeft = calculateLeftDiff(destinationDiffAngle);
+
+        // Init debug info for printStatus().
+        motorTurnType = "left";
+        motorTurnDestination = destinationAngle;
+        motorTurnAngleToGo = destinationDiffAngle;
+        motorTurnAngleAdjustedToGo = diffLeft;
+
+        // we continue in this loop as long as we still need to transition over the 360->0 boundary, or until we are within NUDGE_ANGLE degrees of the target.
+        while ((diffLeft > NUDGE_ANGLE) && (diffRight > NUDGE_ANGLE)) {
+            float oldAngle = currentAngle;
+
+            double power = config.getTurnSpeed();
+            if (diffLeft < (NUDGE_ANGLE * 5))
+                power *= 0.5;
+            else if (diffLeft < (NUDGE_ANGLE * 3))
+                power *= 0.3;
+            nudgeLeft(power);
+
+            currentAngle = getGyroscopeAngle();
+            destinationDiffAngle = (destinationAngle - currentAngle);
+            diffRight = calculateRightDiff(destinationDiffAngle);
+            diffLeft = calculateLeftDiff(destinationDiffAngle);
+            motorTurnAngleToGo = destinationDiffAngle;
+            motorTurnAngleAdjustedToGo = diffLeft;
+        }
+
+        // Turn off the motor.
+        motorBackLeft.setPower(0);
+        motorBackRight.setPower(0);
+        if (config.getUseFourWheelDrive()) {
+            motorFrontLeft.setPower(0);
+            motorFrontRight.setPower(0);
+        }
+
+        // Turn off debug info.
+        motorTurnType = "none";
+        motorTurnDestination = 0.0f;
+        motorTurnAngleToGo = 0.0f;
+        motorTurnAngleAdjustedToGo = 0.0f;
     }
 
     // This nudges over about 2 degrees.
     protected void nudgeRight() {
-        float power = config.getTurnSpeed();
+        nudgeRight(config.getTurnSpeed());
+        sleep(NUDGE_TIME);
 
+        // Turn off the motor
+        motorBackLeft.setPower(0);
+        motorBackRight.setPower(0);
+        if (config.getUseFourWheelDrive()) {
+            motorFrontLeft.setPower(0);
+            motorFrontRight.setPower(0);
+        }
+    }
+
+    protected void nudgeRight(double power) {
         motorBackLeft.setPower(power);
         motorBackRight.setPower(-power);
         if (config.getUseFourWheelDrive()) {
             motorFrontLeft.setPower(power);
             motorFrontRight.setPower(-power);
         }
+    }
+
+    // This nudges over about 2 degrees.
+    protected void nudgeLeft() {
+        nudgeLeft(config.getTurnSpeed());
         sleep(NUDGE_TIME);
-        //turn off the motor
+
+        // Turn off the motor
         motorBackLeft.setPower(0);
         motorBackRight.setPower(0);
         if (config.getUseFourWheelDrive()) {
@@ -871,30 +1057,18 @@ public abstract class ChassisStandard extends OpMode {
         }
     }
 
-
-    // This nudges over about 2 degrees.
-    protected void nudgeLeft() {
-        float power = config.getTurnSpeed();
-
+    protected void nudgeLeft(double power) {
         motorBackLeft.setPower(-power);
         motorBackRight.setPower(power);
         if (config.getUseFourWheelDrive()) {
             motorFrontLeft.setPower(-power);
             motorFrontRight.setPower(power);
         }
-        sleep(NUDGE_TIME);
-        //turn off the motor
-        motorBackLeft.setPower(0);
-        motorBackRight.setPower(0);
-        if (config.getUseFourWheelDrive()) {
-            motorFrontLeft.setPower(0);
-            motorFrontRight.setPower(0);
-        }
     }
 
 
     protected void nudgeBack() {
-        float power = config.getTurnSpeed();
+        double power = config.getTurnSpeed();
 
         motorBackLeft.setPower(-power);
         motorBackRight.setPower(-power);
@@ -933,7 +1107,7 @@ public abstract class ChassisStandard extends OpMode {
     }
 
     protected void strafeLeft(int numberOfMillis) {
-        float power = config.getTurnSpeed();
+        double power = config.getTurnSpeed();
 
         motorBackLeft.setPower(power);
         motorBackRight.setPower(-power);
@@ -953,7 +1127,7 @@ public abstract class ChassisStandard extends OpMode {
 
 
     protected void strafeRight(int numberOfMillis) {
-        float power = config.getTurnSpeed();
+        double power = config.getTurnSpeed();
 
         motorBackLeft.setPower(-power);
         motorBackRight.setPower(power);
