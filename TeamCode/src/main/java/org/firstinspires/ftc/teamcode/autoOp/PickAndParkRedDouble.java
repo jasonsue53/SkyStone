@@ -2,16 +2,15 @@ package org.firstinspires.ftc.teamcode.autoOp;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import org.firstinspires.ftc.teamcode.auto.ChassisConfig;
 import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
 
 /**
  *
  */
-@Autonomous(name="Pick and Park Red", group="OpMode")
-public class PickAndParkRed extends ChassisStandard {
+@Autonomous(name="Pick and Park Red Double", group="OpMode")
+public class PickAndParkRedDouble extends ChassisStandard {
 
-    public PickAndParkRed() {
+    public PickAndParkRedDouble() {
         // override the default of vuforia being off.
         useVuforia = true;
         madeTheRun = false;
@@ -40,11 +39,26 @@ public class PickAndParkRed extends ChassisStandard {
 
                //w encoderDrive(-4);
                 //sleep(500);
-                turnRightAbsolute(90);
+                turnRightAbsolute(90.0f);
                 //sleep(500);
 
                 encoderDrive(60);
                 //sleep(500);
+                raiseFrontFinger();
+                sleep(2000);
+
+                encoderDrive(-84);
+                turnLeftAbsolute(0.0f);
+
+                encoderDrive(6);
+                dropFrontFinger();
+                sleep(2000);
+
+                encoderDrive(-6);
+                sleep(500);
+                turnRightAbsolute(90.0f);
+
+                encoderDrive(84);
                 raiseFrontFinger();
                 sleep(2000);
 
