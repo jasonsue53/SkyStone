@@ -43,7 +43,7 @@ public class PickAndParkRed extends ChassisStandard {
                 raiseFrontFinger();
                 sleep(2000);
 
-                encoderDrive(-26);
+                encoderDrive(-20);
             }
             //VERIFIED WORKS
             else if (stoneconfig =="CENTER") {
@@ -94,7 +94,6 @@ public class PickAndParkRed extends ChassisStandard {
                 raiseBackFinger();
                 sleep(2000);
                 encoderDrive(-24);*/
-
                 encoderDrive(30);
                 sleep(500);
 
@@ -110,7 +109,6 @@ public class PickAndParkRed extends ChassisStandard {
                 sleep(500);
                 raiseBackFinger();
                 sleep(2000);
-
                 encoderDrive(-24);
             }
 
