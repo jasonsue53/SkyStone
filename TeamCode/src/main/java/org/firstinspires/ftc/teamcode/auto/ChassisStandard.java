@@ -73,6 +73,7 @@ public abstract class ChassisStandard extends OpMode {
     private float motorTurnDestination = 0.0f;
     private float motorTurnAngleToGo = 0.0f;
     private float motorTurnAngleAdjustedToGo = 0.0f;
+    private PIDController motorPid = new PIDController(.05, 0, 0);
 
     // Crab
     protected Servo crab;
@@ -657,6 +658,15 @@ public abstract class ChassisStandard extends OpMode {
         }
     }
 
+
+    float getAngleDifference(float from, float to)
+    {
+        float difference = to - from;
+        while (difference < -180) difference += 360;
+        while (difference > 180) difference -= 360;
+        return difference;
+    }
+
     protected void encoderDrive(double inches) {
         encoderDrive(inches, inches);
     }
@@ -667,6 +677,10 @@ public abstract class ChassisStandard extends OpMode {
     }
 
     protected void encoderDrive(double leftInches, double rightInches, double speed) {
+        encoderDrive(leftInches, rightInches, speed, -1);
+    }
+
+    protected void encoderDrive(double leftInches, double rightInches, double speed, float desiredAngle) {
         float startAngle = getGyroscopeAngle();
 
         // Jump out if the motors are turned off.
@@ -676,6 +690,14 @@ public abstract class ChassisStandard extends OpMode {
         if (reverseMotors) {
             leftInches = -leftInches;
             rightInches = -rightInches;
+        }
+
+        if (desiredAngle >= 0.0) {
+            motorPid.reset();
+            motorPid.setSetpoint(0);
+            motorPid.setOutputRange(0, speed);
+            motorPid.setInputRange(-90, 90);
+            motorPid.enable();
         }
 
         double countsPerInch = config.getRearWheelSpeed() / (config.getRearWheelDiameter() * Math.PI);
@@ -711,8 +733,7 @@ public abstract class ChassisStandard extends OpMode {
         telemetry.addData("encoderDrive", "Target %7d, %7d, %7d, %7d",
                 leftBackTarget, rightBackTarget, leftFrontTarget, rightFrontTarget);
 
-        //throttle speed down as we approach our target
-
+        // Throttle speed down as we approach our target
         if ((abs(leftInches) < 8.0) || (abs(rightInches) < 8.0)) {
             speed *= 0.5;
         } else  if ((abs(leftInches) < 5.0) || (abs(rightInches) < 5.0)) {
@@ -739,20 +760,7 @@ public abstract class ChassisStandard extends OpMode {
         // onto the next step, use (isBusy() || isBusy()) in the loop test.
         ElapsedTime motorOnTime = new ElapsedTime();
         boolean keepGoing = true;
-        while ((motorOnTime.seconds() < 30) && keepGoing) {
-            float currentAngle = getGyroscopeAngle();
-            float AngleOffset = startAngle - currentAngle;
-            float leftFactor = 1.0f;
-            float rightFactor = 1.0f;
-
-            // Turn On RUN_TO_POSITION
-
-            motorBackLeft.setPower(Math.abs(speed * leftFactor));
-            motorBackRight.setPower(Math.abs(speed * rightFactor));
-            if (config.getUseFourWheelDrive()) {
-                motorFrontLeft.setPower(Math.abs(speed * leftFactor));
-                motorFrontRight.setPower(Math.abs(speed * rightFactor));
-            }
+        while (keepGoing && (motorOnTime.seconds() < 30)) {
 
             if (config.getUseFourWheelDrive()) {
                 telemetry.addData("encoderDrive1", "Running at %7d, %7d, %7d, %7d",
@@ -776,8 +784,28 @@ public abstract class ChassisStandard extends OpMode {
                 keepGoing = motorBackRight.isBusy() && motorBackLeft.isBusy();
             }
 
-            telemetry.update();
-            sleep(100);
+            if (keepGoing) {
+                // Calculate PID correction = straightne out the line!
+                double correction = 0;
+                if (desiredAngle >= 0.0f) {
+                    float currentAngle = getGyroscopeAngle();
+                    float angleOffset = getAngleDifference(currentAngle, desiredAngle);
+                    correction = motorPid.performPID(angleOffset);
+                    if ((leftInches < 0) && (rightInches < 0)) {
+                        correction = -correction;
+                    }
+                }
+
+                motorBackLeft.setPower(Math.abs(speed - correction));
+                motorBackRight.setPower(Math.abs(speed + correction));
+                if (config.getUseFourWheelDrive()) {
+                    motorFrontLeft.setPower(Math.abs(speed - correction));
+                    motorFrontRight.setPower(Math.abs(speed + correction));
+                }
+            }
+
+           // telemetry.update();
+            //sleep(100);
         }
 
         // Turn off RUN_TO_POSITION
@@ -790,6 +818,17 @@ public abstract class ChassisStandard extends OpMode {
             motorFrontRight.setPower(0);
             motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+
+        // Final turn.
+        if (desiredAngle >= 0.0f) {
+            float currentAngle = getGyroscopeAngle();
+            float angleOffset = getAngleDifference(currentAngle, desiredAngle);
+            if (angleOffset < 0.0f) {
+                turnLeftAbsolute(desiredAngle);
+            } else if (angleOffset > 0.0f) {
+                turnRightAbsolute(desiredAngle);
+            }
         }
 
         /*telemetry.addData("encoderDrive", "Finished (%s) at %7d,%7d,%7d,%7d to [%7d,%7d,%7d,%7d] (%7d,%7d,%7d,%7d)",
