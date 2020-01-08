@@ -31,21 +31,22 @@ public class PickAndParkRed extends ChassisStandard {
             if (stoneconfig == "LEFT") {
 
                 encoderDrive(30);
-                sleep(500);
+
+                //sleep(500);
                 dropFrontFinger();
                 sleep(2000);
-                encoderDrive(-6);
-                sleep(500);
-                turnRight(95);
-                sleep(500);
+
+               //w encoderDrive(-4);
+                //sleep(500);
+                turnRightAbsolute(90);
+                //sleep(500);
 
                 encoderDrive(60);
-                sleep(500);
+                //sleep(500);
                 raiseFrontFinger();
                 sleep(2000);
-                encoderDrive(-24);
 
-
+                encoderDrive(-20);
             }
             //VERIFIED WORKS
             else if (stoneconfig =="CENTER") {

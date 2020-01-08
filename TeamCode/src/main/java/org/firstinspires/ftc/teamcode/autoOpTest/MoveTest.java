@@ -11,20 +11,17 @@ import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
 @Autonomous(name="Move Test", group="ZZTesting")
 public class MoveTest extends ChassisStandard {
 
-    /**
-     * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
-     */
+    public static int sleepTime = 5000;
+
     @Override
-    public void loop () {
+    public void makeTheRun () {
+        // forward one square.
+        encoderDrive(24);
+        sleep(sleepTime);
 
-        if (madeTheRun == false) {
-
-            encoderDrive(24);
-
-            madeTheRun = true;
-        }
-
-        printStatus();
+        // back to the starting location.
+        encoderDrive(-24);
+        sleep(sleepTime);
     }
 }
 

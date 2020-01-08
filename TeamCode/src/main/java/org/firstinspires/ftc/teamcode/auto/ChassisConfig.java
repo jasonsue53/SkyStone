@@ -4,9 +4,9 @@ public class ChassisConfig {
 
     private float rearDiameter;
     private boolean useFourWheelDrive;
-    private float rearWheelSpeed;
-    private float turnSpeed;
-    private float moveSpeed;
+    private double rearWheelSpeed;
+    private double turnSpeed;
+    private double moveSpeed;
     private boolean leftMotorsReversed;
     private boolean rightMotorsReversed;
     private boolean touchSensorON;
@@ -35,11 +35,11 @@ public class ChassisConfig {
     public boolean getUseFourWheelDrive() {
         return useFourWheelDrive;
     }
-    public float getRearWheelSpeed() {
+    public double getRearWheelSpeed() {
         return rearWheelSpeed;
     }
-    public float getTurnSpeed() { return turnSpeed; }
-    public float getMoveSpeed() { return moveSpeed; }
+    public double getTurnSpeed() { return turnSpeed; }
+    public double getMoveSpeed() { return moveSpeed; }
     public boolean isLeftMotorReversed() { return leftMotorsReversed; }
     public boolean isRightMotorReversed() { return rightMotorsReversed; }
     public boolean isTouchSensorON() {return touchSensorON;}
