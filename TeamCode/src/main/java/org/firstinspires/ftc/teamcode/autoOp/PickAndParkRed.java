@@ -19,9 +19,6 @@ public class PickAndParkRed extends ChassisStandard {
        // switchMotorDirection();
     }
 
-    /**
-     * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
-     */
     @Override
     public void loop() {
         if (madeTheRun == false) {
@@ -72,7 +69,7 @@ public class PickAndParkRed extends ChassisStandard {
                 sleep(500);
                 raiseBackFinger();
                 sleep(2000);
-                encoderDrive(-24);
+                encoderDrive(-26);
 
             }
             //NOT TESTED - DOESN'T WORK

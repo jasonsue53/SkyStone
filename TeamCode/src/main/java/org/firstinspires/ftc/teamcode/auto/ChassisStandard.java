@@ -665,6 +665,7 @@ public abstract class ChassisStandard extends OpMode {
     }
 
     protected void encoderDrive(double leftInches, double rightInches, double speed) {
+        float startAngle = getGyroscopeAngle();
 
         // Jump out if the motors are turned off.
         if (!useMotors)
@@ -737,6 +738,19 @@ public abstract class ChassisStandard extends OpMode {
         ElapsedTime motorOnTime = new ElapsedTime();
         boolean keepGoing = true;
         while ((motorOnTime.seconds() < 30) && keepGoing) {
+            float currentAngle = getGyroscopeAngle();
+            float AngleOffset = startAngle - currentAngle;
+            float leftFactor = 1.0f;
+            float rightFactor = 1.0f;
+
+            // Turn On RUN_TO_POSITION
+
+            motorBackLeft.setPower(Math.abs(speed * leftFactor));
+            motorBackRight.setPower(Math.abs(speed * rightFactor));
+            if (config.getUseFourWheelDrive()) {
+                motorFrontLeft.setPower(Math.abs(speed * leftFactor));
+                motorFrontRight.setPower(Math.abs(speed * rightFactor));
+            }
 
             if (config.getUseFourWheelDrive()) {
                 telemetry.addData("encoderDrive1", "Running at %7d, %7d, %7d, %7d",
