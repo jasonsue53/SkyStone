@@ -23,20 +23,22 @@ public class StoneRecognitionTest extends ChassisStandard {
     @Override
     public void loop () {
 
-       /* int count = 0;
-        while(stoneconfig.equals(UNKNOWN) && (count < 2)){
+        // Scan in place for a second.
+        int count = 0;
+        while (stoneconfig.equals(UNKNOWN) && (count < 2)){
             scanStones();
             printStatus();
             sleep(500);
             count++;
         }
 
-        if ((numMoved < 2) && stoneconfig.equals(UNKNOWN)) {
+        // Move forward, and scan again on the next loop.
+        if (numMoved < 1) {
             encoderDrive(4);
             numMoved++;
-            sleep(2000); // TODO: consider making this smaller
+            sleep(1000); // TODO: consider making this smaller
             return;
-        } */
+        }
 
         scanStones();
         printStatus();
