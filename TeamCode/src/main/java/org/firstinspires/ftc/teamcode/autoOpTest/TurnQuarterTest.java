@@ -14,12 +14,13 @@ import java.util.List;
 @Autonomous(name="Turn Delta Quarter Test", group="ZZTesting")
 public class TurnQuarterTest extends ChassisStandard {
 
-    public static int sleepTime = 2000;
+    public static int sleepTime = 5000;
 
     @Override
     public void makeTheRun () {
         turnRight(90);
         sleep(sleepTime);
+
         turnLeft(90);
         sleep(sleepTime);
     }

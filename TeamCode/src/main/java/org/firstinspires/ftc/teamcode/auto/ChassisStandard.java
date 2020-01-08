@@ -19,6 +19,8 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import java.util.List;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 
+import static java.lang.Math.abs;
+
 public abstract class ChassisStandard extends OpMode {
 
     enum InitStage {
@@ -34,6 +36,7 @@ public abstract class ChassisStandard extends OpMode {
 
     // vision detection variables/state
     private final int SCREEN_WIDTH = 600;
+    public static final String UNKNOWN = "unknown";
     private static final String TFOD_MODEL_ASSET = "Skystone.tflite";
     private static final String LABEL_FIRST_ELEMENT = "Stone";
     private static final String LABEL_SECOND_ELEMENT = "Skystone";
@@ -55,6 +58,9 @@ public abstract class ChassisStandard extends OpMode {
     protected TFObjectDetector tfod;
     private int lastStones = 0;
     private int lastSkyStones = 0;
+    private float leftEdgeSkyStone = -1;
+    private float rightEdgeSkyStone = -1;
+    private float widthSkyStone = -1;
     private List<Recognition> lastRecognitions = null;
 
     // Motors
@@ -114,7 +120,7 @@ public abstract class ChassisStandard extends OpMode {
 
     protected ChassisStandard(ChassisConfig config) {
         this.config = config;
-        stoneconfig = "unknown";
+        stoneconfig = UNKNOWN;
     }
 
      /*
@@ -246,13 +252,13 @@ public abstract class ChassisStandard extends OpMode {
                     }
                 }
 
-                telemetry.addData("StoneDetect", "norm: %d, sky: %d", numStones, numSkyStones);
+                telemetry.addData("StoneDetect", "mode:%s, norm: %d, sky: %d, loc: %02.1f,  %02.1f,  %02.1f", stoneconfig, numStones, numSkyStones,
+                        leftEdgeSkyStone, rightEdgeSkyStone, widthSkyStone);
             } else {
                 telemetry.addData("StoneDetect", "DISABLED");
             }
 
-            telemetry.addData("Status", "time: " + runtime.toString());
-            telemetry.addData("Run", "madeTheRun=%b", madeTheRun);
+            telemetry.addData("Status", "madeRun=%b, time: %s", madeTheRun, runtime.toString());
         } else {
             telemetry.addData("Status", "still initializing... %s", initStage);
         }
@@ -283,10 +289,10 @@ public abstract class ChassisStandard extends OpMode {
                 motorBackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                //motorBackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-               // motorBackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-                motorBackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-                motorBackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+                motorBackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                motorBackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                //motorBackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+                //motorBackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
                 if (config.getUseFourWheelDrive()) {
                     motorFrontLeft = hardwareMap.get(DcMotor.class, "motor2");
@@ -299,8 +305,10 @@ public abstract class ChassisStandard extends OpMode {
                     motorFrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-                    motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+                    motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                    motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                   // motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+                   // motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
                 }
             } catch (Exception e) {
                 telemetry.addData("motors", "exception on init: " + e.toString());
@@ -470,12 +478,14 @@ public abstract class ChassisStandard extends OpMode {
 
                 telemetry.addData("Vuforia 1", "found camera");
                 telemetry.update();
+                sleep(2000);
 
                 //  Instantiate the Vuforia engine
                 vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
                 telemetry.addData("Vuforia 1", "found vuforia");
                 telemetry.update();
+                sleep(2000);
 
                 // Loading trackables is not necessary for the TensorFlow Object Detection engine.
                 if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
@@ -483,9 +493,11 @@ public abstract class ChassisStandard extends OpMode {
                 } else {
                     telemetry.addData("Sorry!", "This device is not compatible with TFOD");
                 }
+                sleep(1000);
 
                 telemetry.addData("Vuforia 1", "init tfod");
                 telemetry.update();
+                sleep(1000);
 
                 if (tfod != null) {
                     tfod.activate();
@@ -493,6 +505,7 @@ public abstract class ChassisStandard extends OpMode {
 
                 telemetry.addData("Vuforia 1", "activate");
                 telemetry.update();
+                sleep(1000);
 
             } catch (Exception e) {
                 telemetry.addData("vuforia", "exception on init: " + e.toString());
@@ -501,6 +514,7 @@ public abstract class ChassisStandard extends OpMode {
 
             telemetry.addData("StoneDetectLoc", "loc=%s", stoneconfig);
             printStatus();
+            sleep(5000);
         }
     }
 
@@ -519,7 +533,8 @@ public abstract class ChassisStandard extends OpMode {
 
 
     protected List<Recognition> getRecognitions() {
-        // TODO: use chassis function, dont call getUpdatesRecodgnitions directly.
+        // getUpdatedRecognitions() will return null if no new information is available since
+        // the last time that call was made.
         List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
         if (updatedRecognitions == null) {
             updatedRecognitions = lastRecognitions;
@@ -532,29 +547,52 @@ public abstract class ChassisStandard extends OpMode {
 
     protected void scanStones() {
         if (tfod != null) {
-            // getUpdatedRecognitions() will return null if no new information is available since
-            // the last time that call was made.
+
             // step through the list of recognitions and display boundary info.
             int i = 0;
             for (Recognition recognition : getRecognitions()) {
-                telemetry.addData(String.format("StoneDetect label (%d)", i), recognition.getLabel());
-                telemetry.addData(String.format("StoneDetect left,top (%d)", i), "%.03f , %.03f",
-                        recognition.getLeft(), recognition.getTop());
-                telemetry.addData(String.format("StoneDetect right,bottom (%d)", i), "%.03f , %.03f",
-                        recognition.getRight(), recognition.getBottom());
-
-                int offSet = 0;
-                int leftBorder = SCREEN_WIDTH / 3 + offSet;
-                int rightBorder = (int) (SCREEN_WIDTH * 2.0 / 3.0 + offSet);
-
                 if (recognition.getLabel() == "Skystone") {
-                    if (recognition.getLeft() < leftBorder) {
-                        stoneconfig = "LEFT";
-                    } else if (recognition.getLeft() > rightBorder) {
-                        stoneconfig = "RIGHT";
-                    } else {
-                        stoneconfig = "CENTER";
-                    }
+                    leftEdgeSkyStone = recognition.getLeft();
+                    rightEdgeSkyStone = recognition.getRight();
+                    widthSkyStone = rightEdgeSkyStone - leftEdgeSkyStone;
+
+                   /* telemetry.addData(String.format("StoneDetect label (%d)", i), recognition.getLabel());
+                    telemetry.addData(String.format("StoneDetect left,top (%d)", i), "%.03f , %.03f",
+                            recognition.getLeft(), recognition.getTop());
+                    telemetry.addData(String.format("StoneDetect right,bottom (%d)", i), "%.03f , %.03f",
+                            recognition.getRight(), recognition.getBottom());
+                    telemetry.update(); */
+                }
+            }
+
+            /*int leftBorder = 140;
+            int rightBorder = 315;
+            if (leftEdgeSkyStone < leftBorder) {
+                stoneconfig = "LEFT";
+            } else if (leftEdgeSkyStone > rightBorder) {
+                stoneconfig = "RIGHT";
+            } else {
+                stoneconfig = "CENTER";
+            } */
+
+            int leftBorder = 140;
+            int rightBorder = 315;
+
+            if (widthSkyStone < 300) {
+                if (leftEdgeSkyStone < 50) {
+                    stoneconfig = "LEFT";
+                } else if (leftEdgeSkyStone > 350) {
+                    stoneconfig = "RIGHT";
+                } else {
+                    stoneconfig = "CENTER";
+                }
+            } else {
+                if (rightEdgeSkyStone > 550) {
+                    stoneconfig = "RIGHT";
+                } else if (rightEdgeSkyStone > 450) {
+                    stoneconfig = "CENTER";
+                } else {
+                    stoneconfig = "LEFT";
                 }
             }
         }
@@ -670,16 +708,24 @@ public abstract class ChassisStandard extends OpMode {
         telemetry.addData("encoderDrive", "Target %7d, %7d, %7d, %7d",
                 leftBackTarget, rightBackTarget, leftFrontTarget, rightFrontTarget);
 
+        //throttle speed down as we approach our target
+
+        if ((abs(leftInches) < 8.0) || (abs(rightInches) < 8.0)) {
+            speed *= 0.5;
+        } else  if ((abs(leftInches) < 5.0) || (abs(rightInches) < 5.0)) {
+            speed *= 0.25;
+        }
+
         // Turn On RUN_TO_POSITION
         motorBackLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorBackRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motorBackLeft.setPower(Math.abs(speed));
-        motorBackRight.setPower(Math.abs(speed));
+        motorBackLeft.setPower(abs(speed));
+        motorBackRight.setPower(abs(speed));
         if (config.getUseFourWheelDrive()) {
             motorFrontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             motorFrontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            motorFrontLeft.setPower(Math.abs(speed));
-            motorFrontRight.setPower(Math.abs(speed));
+            motorFrontLeft.setPower(abs(speed));
+            motorFrontRight.setPower(abs(speed));
         }
 
         // keep looping while we are still active, and there is time left, and both motors are running.
@@ -943,8 +989,8 @@ public abstract class ChassisStandard extends OpMode {
             double power = config.getTurnSpeed();
             if (diffRight < (NUDGE_ANGLE * 5))
                 power *= 0.5;
-            else if (diffRight < (NUDGE_ANGLE * 3))
-                power *= 0.3;
+            else if (diffRight < (NUDGE_ANGLE * 4))
+                power *= 0.25;
             nudgeRight(power);
 
             currentAngle = getGyroscopeAngle();
@@ -993,8 +1039,8 @@ public abstract class ChassisStandard extends OpMode {
             double power = config.getTurnSpeed();
             if (diffLeft < (NUDGE_ANGLE * 5))
                 power *= 0.5;
-            else if (diffLeft < (NUDGE_ANGLE * 3))
-                power *= 0.3;
+            else if (diffLeft < (NUDGE_ANGLE * 4))
+                power *= 0.25;
             nudgeLeft(power);
 
             currentAngle = getGyroscopeAngle();

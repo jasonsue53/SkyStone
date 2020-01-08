@@ -7,35 +7,35 @@ import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
 /**
  *
  */
-@Autonomous(name="Turn Absolute Test", group="ZZTesting")
-public class AbsoluteTurnTest extends ChassisStandard {
+@Autonomous(name="Turn Delta Test", group="ZZTesting")
+public class DeltaTurnTest extends ChassisStandard {
 
-    public static int sleepTime = 5000;
+    public static int sleepTime = 2500;
 
     @Override
     public void makeTheRun () {
-        turnRightAbsolute(90);
+        turnRight(90);
         sleep(sleepTime);
-        turnRightAbsolute(180);
+        turnRight(90);
         sleep(sleepTime);
-        turnRightAbsolute(270);
+        turnRight(90);
         sleep(sleepTime);
-        turnRightAbsolute(0);
+        turnRight(90);
         sleep(sleepTime);
-        turnRightAbsolute(90);
+        turnRight(90);
         sleep(sleepTime);
 
-        turnLeftAbsolute(0);
+        turnLeft(90);
         sleep(sleepTime);
-        turnLeftAbsolute(270);
+        turnLeft(90);
         sleep(sleepTime);
-        turnLeftAbsolute(180);
+        turnLeft(90);
         sleep(sleepTime);
-        turnLeftAbsolute(90);
+        turnLeft(90);
         sleep(sleepTime);
-        turnLeftAbsolute(0);
+        turnLeft(90);
         sleep(sleepTime);
-        turnLeftAbsolute(270);
+        turnLeft(90);
         sleep(sleepTime);
     }
 }

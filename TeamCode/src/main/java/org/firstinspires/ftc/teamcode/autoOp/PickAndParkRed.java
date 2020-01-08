@@ -26,9 +26,7 @@ public class PickAndParkRed extends ChassisStandard {
     public void loop() {
         if (madeTheRun == false) {
 
-            //scanStones();
-            //HACK
-            stoneconfig = "LEFT";
+            scanStones();
             //VERIFIED WORKS
             if (stoneconfig == "LEFT") {
 
