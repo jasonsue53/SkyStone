@@ -7,8 +7,8 @@ import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
 /**
  *
  */
-@Autonomous(name="FoundationSnatchRed", group="ZZTesting")
-public class FoundationSnatch extends ChassisStandard {
+@Autonomous(name="FoundationSnatchRedWall", group="OpMode")
+public class FoundationSnatchRedWall extends ChassisStandard {
 
     /**
      * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
@@ -19,15 +19,16 @@ public class FoundationSnatch extends ChassisStandard {
         if (madeTheRun == false) {
 
             /*encoderDrive(36); */
+            switchMotorDirection();
 
             raiseCrab();
             sleep(1000);
-            encoderDrive(45);
+            encoderDrive(50);
             turnRight(90);
-            encoderDrive(10);
+            encoderDrive(9);
             dropCrab();
             sleep(1000);
-            turnRight(75);
+            turnRight(65);
             encoderDrive(22);
 
             raiseCrab();
@@ -35,11 +36,17 @@ public class FoundationSnatch extends ChassisStandard {
 
             encoderDrive(-5);
             turnRight(80);
-            encoderDrive(20);
+
+            encoderDrive(50);
             sleep(1000);
 
-            turnRight(30);
-            encoderDrive(25);
+            turnLeft(30);
+            encoderDrive(5);
+
+            turnLeft(30);
+            encoderDrive(9);
+
+
 
 
 
