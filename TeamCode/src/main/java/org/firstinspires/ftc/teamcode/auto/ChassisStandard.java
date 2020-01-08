@@ -325,6 +325,7 @@ public abstract class ChassisStandard extends OpMode {
                 telemetry.addData("crab", "exception on init: " + e.toString());
                 useCrab = false;
             }
+            raiseCrab();
         }
     }
 
@@ -579,6 +580,7 @@ public abstract class ChassisStandard extends OpMode {
             int rightBorder = 315;
 
             if (widthSkyStone < 300) {
+                // skystone is normal sized - only one stone, we can trust it.
                 if (leftEdgeSkyStone < 50) {
                     stoneconfig = "LEFT";
                 } else if (leftEdgeSkyStone > 350) {
@@ -629,7 +631,7 @@ public abstract class ChassisStandard extends OpMode {
 
     public void dropCrab() {
         if (useCrab) {
-            crabAngle = 0.5;
+            crabAngle = 0.4;
             crab.setPosition(crabAngle);
         }
     }
