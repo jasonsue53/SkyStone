@@ -1094,7 +1094,6 @@ public abstract class ChassisStandard extends OpMode {
         }
     }
 
-
     protected void nudgeRight(double power) {
         motorBackLeft.setPower(power);
         motorBackRight.setPower(-power);
