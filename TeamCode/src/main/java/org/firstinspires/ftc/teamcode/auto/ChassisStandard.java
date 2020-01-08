@@ -513,7 +513,7 @@ public abstract class ChassisStandard extends OpMode {
                 telemetry.addData(String.format("StoneDetect right,bottom (%d)", i), "%.03f , %.03f",
                         recognition.getRight(), recognition.getBottom());
 
-                int offSet = -50;
+                int offSet = 0;
                 int leftBorder = SCREEN_WIDTH / 3 + offSet;
                 int rightBorder = (int) (SCREEN_WIDTH * 2.0 / 3.0 + offSet);
 
