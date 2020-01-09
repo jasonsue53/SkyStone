@@ -46,7 +46,7 @@ public class FoundationSnatchRedWall extends ChassisStandard {
             turnRight(50);
             encoderDrive(9);
 
-            turnRightAbsolute(90);
+            turnRightAbsolute(270);
 
 
 
