@@ -30,8 +30,8 @@ public class PickAndParkRedDouble extends ChassisStandard {
     public void loop() {
         if (madeTheRun == false) {
 
-            // HACK: hard-coded to CENTER.
-            stoneconfig = "CENTER";
+            // HACK: hard-coded to RIGHT.
+            //stoneconfig = "RIGHT";
 
            /* int count = 0;
             while(stoneconfig.equals(UNKNOWN) && (count < 2)){
@@ -47,10 +47,20 @@ public class PickAndParkRedDouble extends ChassisStandard {
                 return;
             } */
 
+            // Scan in place for a second.
+                scanStones();
+                printStatus();
+                encoderDrive(PEEKABOO_DISTANCE, PEEKABOO_DISTANCE, 0.8f, 0.0f);
+                numMoved++;
+                sleep(500);
+                scanStones();
+                printStatus();
+
             if (stoneconfig == "LEFT") {
 
                 //drive forward to pick up skystone, making sure to subtract the amount we already inched forward for peek_aboo.
-                encoderDrive(30 - (numMoved * PEEKABOO_DISTANCE));
+                float firstDistance = 29 - (numMoved * PEEKABOO_DISTANCE);
+                encoderDrive(firstDistance, firstDistance, 0.8, 0.0f);
 
                 // pick up first skystone
                 dropFrontFinger();
@@ -62,13 +72,14 @@ public class PickAndParkRedDouble extends ChassisStandard {
 
                 // drive under the bridge, raise the finger so the stone can fall out, but don't wait until the finger is all
                 // the way up before we move back - we can roll back at the same time.
-                encoderDrive(53, 53, 1.0);
+                encoderDrive(53, 53, 1.0, 90.0f);
                 raiseFrontFinger();
                 //turnLeftAbsolute(90.0f);
-                encoderDrive(-76, -76, 1.0);
+                encoderDrive(-76, -76, 1.0, 90.0f);
 
                 // turn left back towards the stones.
                 turnLeftAbsolute(0.0f);
+                turnLeft(10);
                 encoderDrive(6);
 
                 // pick up second skystone.
@@ -80,19 +91,21 @@ public class PickAndParkRedDouble extends ChassisStandard {
                 turnRightAbsolute(90.0f);
 
                 // drive under the bridge again, and once again raise the finger and start racing back towards the line.
-                encoderDrive(80, 80, 1.0);
+                encoderDrive(80, 80, 1.0, 90.0f);
                 raiseFrontFinger();
-                encoderDrive(-20, -20, 1.0);
-            }
-            //VERIFIED WORKS
-            else if (stoneconfig =="CENTER") {
+                encoderDrive(-26, -26, 1.0,135.0f);
 
-                encoderDrive(6 - (numMoved *PEEKABOO_DISTANCE));
+                turnToAngle(90.0f);
+
+            } else if (stoneconfig =="CENTER") {  //VERIFIED WORKS
+
+                float firstDistance = 6 - (numMoved * PEEKABOO_DISTANCE);
+                encoderDrive(firstDistance, firstDistance, 0.8, 0.0f);
                 turnRightAbsolute(45);
-                encoderDrive(12);
+                encoderDrive(12, 12, 0.8, 45.0f);
                 turnLeftAbsolute(0);
                 //encoderDrive(12);
-                encoderDrive(15);
+                encoderDrive(15, 15, 0.8, 0.0f);
 
                 // pick up first skystone
                 dropFrontFinger();
@@ -105,9 +118,9 @@ public class PickAndParkRedDouble extends ChassisStandard {
 
                 // drive under the bridge, raise the finger so the stone can fall out, but don't wait until the finger is all
                 // the way up before we move back - we can roll back at the same time.
-                encoderDrive(45, 45, 1.0);
+                encoderDrive(45, 45, 1.0, 90.0f);
                 raiseFrontFinger();
-                encoderDrive(-69, -69, 1.0);
+                encoderDrive(-69, -69, 1.0, 90.0f);
 
 
                 // turn left back towards the stones.
@@ -125,50 +138,64 @@ public class PickAndParkRedDouble extends ChassisStandard {
 
 
                 // drive under the bridge again, and once again raise the finger and start racing back towards the line.
-                encoderDrive(69, 69, 1.0);
+                encoderDrive(69, 69, 1.0, 90.0f);
                 raiseFrontFinger();
 
-                encoderDrive(-13, -13, 1.0);
+                encoderDrive(-19, -19, 1.0,135.0f);
 
-            }
-            //NOT TESTED - DOESN'T WORK
-            else {
+                turnToAngle(90.0f);
 
-                /*encoderDrive(6);
-                turnRight(45);
-                encoderDrive(20);
-                turnLeft(38);
-                encoderDrive(13);
+            } else {
 
-                sleep(500);
-                dropBackFinger();
-                sleep(2000);
+                float firstDistance = 6 - (numMoved * PEEKABOO_DISTANCE);
+                encoderDrive(firstDistance, firstDistance, 0.8, 0.0f);
+                turnRightAbsolute(45);
+                encoderDrive(22, 22, 0.8, 45.0f);
+                turnLeftAbsolute(0);
+                //encoderDrive(12);
+                encoderDrive(8.5f, 8.5f, 0.8, 0.0f);
 
-                encoderDrive(-5);
-                sleep(500);
-                turnRight(95);
-                sleep(500);
-                encoderDrive(45);
-                sleep(500);
-                raiseBackFinger();
-                sleep(2000);
-                encoderDrive(-24);*/
-                encoderDrive(30);
-                sleep(500);
+                // pick up first skystone
+                dropFrontFinger();
+                sleep(1500);
 
-                sleep(500);
-                dropBackFinger();
-                sleep(2000);
 
-                encoderDrive(-5);
-                sleep(500);
-                turnRight(95);
-                sleep(500);
-                encoderDrive(60);
-                sleep(500);
-                raiseBackFinger();
-                sleep(2000);
-                encoderDrive(-24);
+                //back up a bit, and turn right towards the bridge
+                encoderDrive(-6);
+                turnRightAbsolute(90.0f);
+
+
+                // drive under the bridge, raise the finger so the stone can fall out, but don't wait until the finger is all
+                // the way up before we move back - we can roll back at the same time.
+                encoderDrive(40, 40, 1.0, 90.0f);
+                turnLeftAbsolute(90.0f);
+
+                raiseFrontFinger();
+                encoderDrive(-64, -64, 1.0, 90.0f);
+
+
+
+                // turn left back towards the stones.
+                turnLeftAbsolute(0.0f);
+                encoderDrive(6);
+
+                // pick up second skystone.
+                dropFrontFinger();
+                sleep(1500);
+
+                // back up a bit, and turn right towards the bridge
+                encoderDrive(-7);
+                turnRightAbsolute(90.0f);
+
+                // drive under the bridge again, and once again raise the finger and start racing back towards the line.
+                encoderDrive(69, 69, 1.0, 90.0f);
+
+                raiseFrontFinger();
+
+                encoderDrive(-26, -26, 1.0,135.0f);
+
+                turnToAngle(90.0f);
+
             }
 
             madeTheRun = true;
