@@ -30,7 +30,10 @@ public class PickAndParkRedDouble extends ChassisStandard {
     public void loop() {
         if (madeTheRun == false) {
 
-            int count = 0;
+            // HACK: hard-coded to CENTER.
+            stoneconfig = "CENTER";
+
+           /* int count = 0;
             while(stoneconfig.equals(UNKNOWN) && (count < 2)){
                 scanStones();
                 sleep(250);
@@ -42,7 +45,7 @@ public class PickAndParkRedDouble extends ChassisStandard {
                 numMoved++;
                 sleep(500); // TODO: consider making this smaller
                 return;
-            }
+            } */
 
             if (stoneconfig == "LEFT") {
 
@@ -84,27 +87,28 @@ public class PickAndParkRedDouble extends ChassisStandard {
             //VERIFIED WORKS
             else if (stoneconfig =="CENTER") {
 
-                encoderDrive(6);
+                encoderDrive(6 - (numMoved *PEEKABOO_DISTANCE));
                 turnRightAbsolute(45);
-                encoderDrive(10);
+                encoderDrive(12);
                 turnLeftAbsolute(0);
-                encoderDrive(113);
+                //encoderDrive(12);
+                encoderDrive(15);
 
                 // pick up first skystone
                 dropFrontFinger();
-                sleep(2000);
-                /*
+                sleep(1500);
 
                 // back up a bit, and turn right towards the bridge
-                encoderDrive(-5);
-                turnRight(95);
+                encoderDrive(-6);
+                turnRightAbsolute(90.0f);
+
 
                 // drive under the bridge, raise the finger so the stone can fall out, but don't wait until the finger is all
                 // the way up before we move back - we can roll back at the same time.
-                encoderDrive(60);
+                encoderDrive(45, 45, 1.0);
                 raiseFrontFinger();
-                //turnLeftAbsolute(90.0f);
-                encoderDrive(-76, -76, 1.0);
+                encoderDrive(-69, -69, 1.0);
+
 
                 // turn left back towards the stones.
                 turnLeftAbsolute(0.0f);
@@ -114,14 +118,17 @@ public class PickAndParkRedDouble extends ChassisStandard {
                 dropFrontFinger();
                 sleep(1500);
 
+
                 // back up a bit, and turn right towards the bridge
                 encoderDrive(-7);
                 turnRightAbsolute(90.0f);
 
+
                 // drive under the bridge again, and once again raise the finger and start racing back towards the line.
-                encoderDrive(80, 80, 1.0);
+                encoderDrive(69, 69, 1.0);
                 raiseFrontFinger();
-                encoderDrive(-20, -20, 1.0);*/
+
+                encoderDrive(-13, -13, 1.0);
 
             }
             //NOT TESTED - DOESN'T WORK
