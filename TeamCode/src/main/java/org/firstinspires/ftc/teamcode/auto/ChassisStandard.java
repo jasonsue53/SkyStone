@@ -667,6 +667,8 @@ public abstract class ChassisStandard extends OpMode {
         return difference;
     }
 
+
+
     protected void encoderDrive(double inches) {
         encoderDrive(inches, inches);
     }
@@ -1119,6 +1121,19 @@ public abstract class ChassisStandard extends OpMode {
         motorTurnDestination = 0.0f;
         motorTurnAngleToGo = 0.0f;
         motorTurnAngleAdjustedToGo = 0.0f;
+    }
+
+    protected void turnToAngle(float destinationAngle) {
+        float currentAngle;
+        float angleDiff;
+        currentAngle = getGyroscopeAngle();
+        angleDiff = getAngleDifference(currentAngle, destinationAngle);
+        if(angleDiff < 0) {
+            turnLeftAbsolute(destinationAngle);
+        } else {
+            turnRightAbsolute(destinationAngle);
+        }
+
     }
 
     // This nudges over about 2 degrees.
