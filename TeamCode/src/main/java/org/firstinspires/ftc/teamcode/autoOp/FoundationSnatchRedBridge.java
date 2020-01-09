@@ -29,7 +29,7 @@ public class FoundationSnatchRedBridge extends ChassisStandard {
             dropCrab();
             sleep(1000);
             turnRight(65);
-            encoderDrive(22);
+            encoderDrive(24);
 
             raiseCrab();
             sleep(1000);
