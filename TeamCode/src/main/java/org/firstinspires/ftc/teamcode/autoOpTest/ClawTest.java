@@ -10,20 +10,20 @@ import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
  */
 @Autonomous(name="Claw Test", group="ZZTesting")
 public class ClawTest extends ChassisStandard {
+    public static int sleepTime = 1500;
 
-    /**
-     * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
-     */
     @Override
     public void loop () {
 
         if (madeTheRun == false) {
 
-            raiseCrab();
-            sleep(2000);
+            for (int i = 0 ; i < 3 ; i++) {
+                raiseCrab();
+                sleep(sleepTime);
 
-            dropCrab();
-            sleep(2000);
+                dropCrab();
+                sleep(sleepTime);
+            }
 
             madeTheRun = true;
         }

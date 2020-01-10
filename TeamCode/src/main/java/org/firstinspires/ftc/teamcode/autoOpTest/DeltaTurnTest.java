@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
 @Autonomous(name="Turn Delta Test", group="ZZTesting")
 public class DeltaTurnTest extends ChassisStandard {
 
-    public static int sleepTime = 2500;
+    public static int sleepTime = 1500;
 
     @Override
     public void makeTheRun () {

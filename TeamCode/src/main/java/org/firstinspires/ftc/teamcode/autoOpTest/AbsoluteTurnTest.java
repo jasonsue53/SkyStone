@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
 @Autonomous(name="Turn Absolute Test", group="ZZTesting")
 public class AbsoluteTurnTest extends ChassisStandard {
 
-    public static int sleepTime = 5000;
+    public static int sleepTime = 1500;
 
     @Override
     public void makeTheRun () {
