@@ -7,7 +7,7 @@ import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
 /**
  *
  */
-@Autonomous(name="Pick and Park Red Double", group="OpMode")
+@Autonomous(name="Pick and Park Blue Double", group="OpMode")
 public class PickAndParkBlueDouble extends ChassisStandard {
 
     private static final int PEEKABOO_DISTANCE = 4;
@@ -30,22 +30,6 @@ public class PickAndParkBlueDouble extends ChassisStandard {
     public void loop() {
         if (madeTheRun == false) {
 
-            // HACK: hard-coded to RIGHT.
-            //stoneconfig = "RIGHT";
-
-           /* int count = 0;
-            while(stoneconfig.equals(UNKNOWN) && (count < 2)){
-                scanStones();
-                sleep(250);
-                count++;
-            }
-
-            if ((numMoved < 2) && stoneconfig.equals(UNKNOWN)) {
-                encoderDrive(PEEKABOO_DISTANCE);
-                numMoved++;
-                sleep(500); // TODO: consider making this smaller
-                return;
-            } */
 
             // Scan in place for a second.
                 scanStones();
@@ -56,14 +40,19 @@ public class PickAndParkBlueDouble extends ChassisStandard {
                 scanStones();
                 printStatus();
 
-            if (stoneconfig == "LEFT") {
+            // HACK: hard-coded for testing.
+            //stoneconfig = "CENTER";
+            printStatus();
+
+            //for blue we need to switch this to right from left
+            if (stoneconfig == "RIGHT") {
 
                 //drive forward to pick up skystone, making sure to subtract the amount we already inched forward for peek_aboo.
                 float firstDistance = 29 - (numMoved * PEEKABOO_DISTANCE);
                 encoderDrive(firstDistance, firstDistance, 0.8, 0.0f);
 
                 // pick up first skystone
-                dropFrontFinger();
+                dropBackFinger();
                 sleep(1500);
 
                 // back up a bit, and turn right towards the bridge
@@ -72,18 +61,18 @@ public class PickAndParkBlueDouble extends ChassisStandard {
 
                 // drive under the bridge, raise the finger so the stone can fall out, but don't wait until the finger is all
                 // the way up before we move back - we can roll back at the same time.
-                encoderDrive(53, 53, 1.0, 90.0f);
-                raiseFrontFinger();
+                encoderDrive(53, 53, 1.0, 270.0f);
+                raiseBackFinger();
                 //turnLeftAbsolute(90.0f);
-                encoderDrive(-76, -76, 1.0, 90.0f);
+                encoderDrive(-76, -76, 1.0, 270.0f);
 
                 // turn left back towards the stones.
-                turnRightAbsolute(180.0f);
+                turnRightAbsolute(0.0f);
                 turnRight(10);
                 encoderDrive(6);
 
                 // pick up second skystone.
-                dropFrontFinger();
+                dropBackFinger();
                 sleep(1500);
 
                 // back up a bit, and turn right towards the bridge
@@ -91,24 +80,24 @@ public class PickAndParkBlueDouble extends ChassisStandard {
                 turnLeftAbsolute(270.0f);
 
                 // drive under the bridge again, and once again raise the finger and start racing back towards the line.
-                encoderDrive(80, 80, 1.0, 90.0f);
-                raiseFrontFinger();
-                encoderDrive(-26, -26, 1.0,135.0f);
+                encoderDrive(80, 80, 1.0, 270.0f);
+                raiseBackFinger();
+                encoderDrive(-26, -26, 1.0,225.0f);
 
                 turnToAngle(270.0f);
 
             } else if (stoneconfig =="CENTER") {  //VERIFIED WORKS
 
+                // navigate to first stone.
                 float firstDistance = 6 - (numMoved * PEEKABOO_DISTANCE);
                 encoderDrive(firstDistance, firstDistance, 0.8, 0.0f);
-                turnLeftAbsolute(225.0f);
-                encoderDrive(12, 12, 0.8, 45.0f);
-                turnRightAbsolute(180.0f);
-                //encoderDrive(12);
+                turnLeftAbsolute(315.0f);
+                encoderDrive(12, 12, 0.8, 315.0f);
+                turnRightAbsolute(0.0f);
                 encoderDrive(15, 15, 0.8, 0.0f);
 
                 // pick up first skystone
-                dropFrontFinger();
+                dropBackFinger();
                 sleep(1500);
 
                 // back up a bit, and turn right towards the bridge
@@ -118,17 +107,17 @@ public class PickAndParkBlueDouble extends ChassisStandard {
 
                 // drive under the bridge, raise the finger so the stone can fall out, but don't wait until the finger is all
                 // the way up before we move back - we can roll back at the same time.
-                encoderDrive(45, 45, 1.0, 90.0f);
-                raiseFrontFinger();
-                encoderDrive(-69, -69, 1.0, 90.0f);
+                encoderDrive(45, 45, 1.0, 270.0f);
+                raiseBackFinger();
+                encoderDrive(-69, -69, 1.0, 270.0f);
 
 
                 // turn left back towards the stones.
-                turnRightAbsolute(180.0f);
+                turnRightAbsolute(0.0f);
                 encoderDrive(6);
 
                 // pick up second skystone.
-                dropFrontFinger();
+                dropBackFinger();
                 sleep(1500);
 
 
@@ -138,10 +127,10 @@ public class PickAndParkBlueDouble extends ChassisStandard {
 
 
                 // drive under the bridge again, and once again raise the finger and start racing back towards the line.
-                encoderDrive(69, 69, 1.0, 90.0f);
-                raiseFrontFinger();
+                encoderDrive(69, 69, 1.0, 270.0f);
+                raiseBackFinger();
 
-                encoderDrive(-19, -19, 1.0,135.0f);
+                encoderDrive(-19, -19, 1.0,225.0f);
 
                 turnToAngle(270.0f);
 
@@ -149,14 +138,14 @@ public class PickAndParkBlueDouble extends ChassisStandard {
 
                 float firstDistance = 6 - (numMoved * PEEKABOO_DISTANCE);
                 encoderDrive(firstDistance, firstDistance, 0.8, 0.0f);
-                turnLeftAbsolute(225.0f);
-                encoderDrive(22, 22, 0.8, 45.0f);
-                turnRightAbsolute(180.0f);
+                turnLeftAbsolute(315.0f);
+                encoderDrive(22, 22, 0.8, 315.0f);
+                turnRightAbsolute(0.0f);
                 //encoderDrive(12);
                 encoderDrive(8.5f, 8.5f, 0.8, 0.0f);
 
                 // pick up first skystone
-                dropFrontFinger();
+                dropBackFinger();
                 sleep(1500);
 
 
@@ -167,20 +156,20 @@ public class PickAndParkBlueDouble extends ChassisStandard {
 
                 // drive under the bridge, raise the finger so the stone can fall out, but don't wait until the finger is all
                 // the way up before we move back - we can roll back at the same time.
-                encoderDrive(40, 40, 1.0, 90.0f);
+                encoderDrive(40, 40, 1.0, 270.0f);
                 turnRightAbsolute(270.0f);
 
-                raiseFrontFinger();
-                encoderDrive(-64, -64, 1.0, 90.0f);
+                raiseBackFinger();
+                encoderDrive(-64, -64, 1.0, 270.0f);
 
 
 
                 // turn left back towards the stones.
-                turnRightAbsolute(180.0f);
+                turnRightAbsolute(0.0f);
                 encoderDrive(6);
 
                 // pick up second skystone.
-                dropFrontFinger();
+                dropBackFinger();
                 sleep(1500);
 
                 // back up a bit, and turn right towards the bridge
@@ -188,13 +177,14 @@ public class PickAndParkBlueDouble extends ChassisStandard {
                 turnLeftAbsolute(270.0f);
 
                 // drive under the bridge again, and once again raise the finger and start racing back towards the line.
-                encoderDrive(69, 69, 1.0, 90.0f);
+                encoderDrive(69, 69, 1.0, 270.0f);
 
-                raiseFrontFinger();
+                raiseBackFinger();
 
-                encoderDrive(-26, -26, 1.0,135.0f);
+                encoderDrive(-26, -26, 1.0,225.0f);
 
                 turnToAngle(270.0f);
+                encoderDrive(-6);
 
             }
 

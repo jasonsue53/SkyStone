@@ -40,6 +40,7 @@ public class PickAndParkRedDouble extends ChassisStandard {
                 count++;
             }
 
+
             if ((numMoved < 2) && stoneconfig.equals(UNKNOWN)) {
                 encoderDrive(PEEKABOO_DISTANCE);
                 numMoved++;
