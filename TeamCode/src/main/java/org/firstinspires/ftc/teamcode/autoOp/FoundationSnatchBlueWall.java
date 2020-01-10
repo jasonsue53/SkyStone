@@ -43,7 +43,7 @@ public class FoundationSnatchBlueWall extends ChassisStandard {
             turnRight(30);
             encoderDrive(30);
 
-            turnLeft(50);
+            turnLeft(30);
             encoderDrive(9);
 
             turnLeftAbsolute(90);
