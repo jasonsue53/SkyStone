@@ -11,25 +11,18 @@ import java.util.List;
 /**
  *
  */
-@Autonomous(name="Turn Test Quarter", group="ZZTesting")
+@Autonomous(name="Turn Delta Quarter Test", group="ZZTesting")
 public class TurnQuarterTest extends ChassisStandard {
 
-    /**a
-     * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
-     */
+    public static int sleepTime = 5000;
+
     @Override
-    public void loop () {
+    public void makeTheRun () {
+        turnRight(90);
+        sleep(sleepTime);
 
-        if (madeTheRun == false) {
-
-            turnRight(90);
-            sleep(500);
-            turnLeft(90);
-
-            madeTheRun = true;
-        }
-
-        printStatus();
+        turnLeft(90);
+        sleep(sleepTime);
     }
 }
 

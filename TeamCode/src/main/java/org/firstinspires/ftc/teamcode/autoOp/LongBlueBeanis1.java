@@ -22,7 +22,7 @@ public abstract class LongBlueBeanis1 extends ChassisStandard {
 
             encoderDrive(27);
 
-            turnLeft(90);
+            turnLeft(95);
             encoderDrive(13);
             madeTheRun = true;
         }

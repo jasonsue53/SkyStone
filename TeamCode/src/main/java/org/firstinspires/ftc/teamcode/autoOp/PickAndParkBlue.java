@@ -2,18 +2,18 @@ package org.firstinspires.ftc.teamcode.autoOp;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import org.firstinspires.ftc.teamcode.auto.ChassisConfig;
 import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
 
 /**
  *
  */
-@Autonomous(name="Pick and Park ", group="OpMode")
-public class     PickAndPark extends ChassisStandard {
+@Autonomous(name="Pick and Park Blue", group="bbTesting")
+public class PickAndParkBlue extends ChassisStandard {
 
-    public PickAndPark() {
+    public PickAndParkBlue() {
         // override the default of vuforia being off.
         useVuforia = true;
+        madeTheRun= false;
 
         // need this for tyler 2 chassis
        // switchMotorDirection();
@@ -27,68 +27,89 @@ public class     PickAndPark extends ChassisStandard {
         if (madeTheRun == false) {
 
             scanStones();
+            //LEFT VERIFIED WORKS
             if (stoneconfig == "LEFT") {
 
                 encoderDrive(30);
+
                 sleep(500);
-                dropFrontFinger();
+                dropLeftFinger();
                 sleep(2000);
+
                 encoderDrive(-6);
                 sleep(500);
-                turnRight(95);
+                turnLeft(95);
                 sleep(500);
 
                 encoderDrive(60);
                 sleep(500);
-                raiseFrontFinger();
+                raiseLeftFinger();
                 sleep(2000);
                 encoderDrive(-24);
 
+            }
+            //CENTER VERIFIED WORKS
+            else if (stoneconfig =="CENTER")  {
 
-            } else if (stoneconfig =="CENTER") {
-
-                encoderDrive(6);
-                turnRight(45);
+                /*encoderDrive(6);
+                turnLeft(45);
                 encoderDrive(8);
-                turnLeft(42);
-                encoderDrive(19);
+                turnRight(42);
+                encoderDrive(19);*/
 
+                encoderDrive(30);
 
                 sleep(500);
-
-                dropFrontFinger();
-                 sleep(2000);
+                dropRightFinger();
+                sleep(2000);
 
                 encoderDrive(-5);
                 sleep(500);
-                turnRight(85);
+                turnLeft(95);
                 sleep(500);
                 encoderDrive(60);
                 sleep(500);
-                raiseFrontFinger();
+                raiseRightFinger();
                 sleep(2000);
                 encoderDrive(-24);
 
-            } else if (stoneconfig == "RIGHT") {
+            }
+            //NOT TESTED - DOESN'T WORK
+            else if (stoneconfig == "RIGHT") {
 
-                encoderDrive(6);
+               /* encoderDrive(6);
                 turnRight(45);
                 encoderDrive(20);
                 turnLeft(38);
                 encoderDrive(13);
 
-
                 sleep(500);
-                dropFrontFinger();
+                dropRightFinger();
                 sleep(2000);
 
                 encoderDrive(-5);
                 sleep(500);
-                turnRight(80);
+                turnLeft(95);
                 sleep(500);
                 encoderDrive(45);
                 sleep(500);
-                raiseFrontFinger();
+                raiseRightFinger();
+                sleep(2000);
+                encoderDrive(-24);*/
+
+                encoderDrive(30);
+
+                sleep(500);
+                dropRightFinger();
+                sleep(2000);
+
+                encoderDrive(-5);
+                sleep(500);
+                turnLeft(95);
+                sleep(500);
+                encoderDrive(60);
+                sleep(500);
+                raiseRightFinger();
                 sleep(2000);
                 encoderDrive(-24);
             }
