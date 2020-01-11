@@ -2,13 +2,12 @@ package org.firstinspires.ftc.teamcode.autoOp;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import org.firstinspires.ftc.teamcode.auto.ChassisConfig;
 import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
 
 /**
  *
  */
-@Autonomous(name="Pick and Park Blue", group="OpMode")
+@Autonomous(name="Pick and Park Blue", group="bbTesting")
 public class PickAndParkBlue extends ChassisStandard {
 
     public PickAndParkBlue() {
@@ -34,7 +33,7 @@ public class PickAndParkBlue extends ChassisStandard {
                 encoderDrive(30);
 
                 sleep(500);
-                dropFrontFinger();
+                dropLeftFinger();
                 sleep(2000);
 
                 encoderDrive(-6);
@@ -44,7 +43,7 @@ public class PickAndParkBlue extends ChassisStandard {
 
                 encoderDrive(60);
                 sleep(500);
-                raiseFrontFinger();
+                raiseLeftFinger();
                 sleep(2000);
                 encoderDrive(-24);
 
@@ -61,7 +60,7 @@ public class PickAndParkBlue extends ChassisStandard {
                 encoderDrive(30);
 
                 sleep(500);
-                dropBackFinger();
+                dropRightFinger();
                 sleep(2000);
 
                 encoderDrive(-5);
@@ -70,7 +69,7 @@ public class PickAndParkBlue extends ChassisStandard {
                 sleep(500);
                 encoderDrive(60);
                 sleep(500);
-                raiseBackFinger();
+                raiseRightFinger();
                 sleep(2000);
                 encoderDrive(-24);
 
@@ -85,7 +84,7 @@ public class PickAndParkBlue extends ChassisStandard {
                 encoderDrive(13);
 
                 sleep(500);
-                dropBackFinger();
+                dropRightFinger();
                 sleep(2000);
 
                 encoderDrive(-5);
@@ -94,14 +93,14 @@ public class PickAndParkBlue extends ChassisStandard {
                 sleep(500);
                 encoderDrive(45);
                 sleep(500);
-                raiseBackFinger();
+                raiseRightFinger();
                 sleep(2000);
                 encoderDrive(-24);*/
 
                 encoderDrive(30);
 
                 sleep(500);
-                dropBackFinger();
+                dropRightFinger();
                 sleep(2000);
 
                 encoderDrive(-5);
@@ -110,7 +109,7 @@ public class PickAndParkBlue extends ChassisStandard {
                 sleep(500);
                 encoderDrive(60);
                 sleep(500);
-                raiseBackFinger();
+                raiseRightFinger();
                 sleep(2000);
                 encoderDrive(-24);
             }

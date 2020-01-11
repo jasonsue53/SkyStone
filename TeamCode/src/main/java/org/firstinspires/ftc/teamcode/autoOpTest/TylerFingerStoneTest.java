@@ -14,21 +14,21 @@ public class TylerFingerStoneTest extends ChassisStandard {
     public void loop () {
 
         if (madeTheRun == false) {
-            /*dropBackFinger();
+            /*dropRightFinger();
             sleep(1000);
-            dropFrontFinger();
-            /*raiseBackFinger();
+            dropLeftFinger();
+            /*raiseRightFinger();
             sleep(1000);
-            raiseFrontFinger();*/
+            raiseLeftFinger();*/
 
             encoderDrive(-30);
             sleep(500);
-            dropBackFinger();
+            dropRightFinger();
             sleep(2000);
             encoderDrive(6);
             turnRight(75);
             encoderDrive(-60);
-            raiseBackFinger();
+            raiseRightFinger();
             sleep(2000);
             encoderDrive(24);
 
