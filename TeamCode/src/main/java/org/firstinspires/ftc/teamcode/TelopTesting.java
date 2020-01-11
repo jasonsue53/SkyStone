@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.hardware.Sensor;
+
 //import com.acmerobotics.dashboard.FtcDashboard;
 //import com.acmerobotics.dashboard.config.Config;
 //import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -7,6 +9,9 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 //import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.LED;
 import com.qualcomm.robotcore.hardware.Servo;
 //import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.Range;
@@ -23,14 +28,15 @@ public class TelopTesting extends OpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     // Chassis
-    private DcMotor motorBackLeft = null;
-    private DcMotor motorFrontLeft = null;
-    private DcMotor motorBackRight = null;
-    private DcMotor motorFrontRight = null;
+    private DcMotor leftRearMotor = null;
+    private DcMotor leftFrontMotor = null;
+    private DcMotor rightRearMotor = null;
+    private DcMotor rightFrontMotor = null;
 
     // Stone placement
     private DcMotor elevatorMotor = null;
-    private DcMotor craneMotor = null;
+    private DcMotorEx craneMotor = null;
+    private DigitalChannel craneMagnet = null;
     private Servo handServo = null;
 
     // Stone sucker
@@ -40,20 +46,36 @@ public class TelopTesting extends OpMode {
     // Crab
     private Servo crabServo = null;
 
+    // Cap Stone
+    private Servo capServo = null;
+
+    // LEDs
+//    private LED ledLights = null;
+
     // State Variables
     private boolean g1startLastPos = false;
     private boolean g1xLastPos = false;
     private boolean g1lefttriggerLastPos = false;
     private boolean g2lefttriggerLastPos = false;
 
-    private boolean driveReverse = false;
+    private boolean driveReverse = true;
 
     private boolean elevatorAutomate = false;
+    private boolean elevatorPhase1 = false;
+    private boolean elevatorPhase2 = false;
 
     private boolean crabUp;
 
+    private boolean craneDone = false;
+    private int craneLastMagHit = 0;
+    private int craneOffset = 0;
+    private boolean craneMagLastState = true;
+    private int craneMagStartFalse = 0;
+    private int craneMagEndFalse = 0;
+
     // Constants
-    private static final int ELEVATOR_LOW = 0;
+    private static final int ELEVATOR_BOTTOM = 0;
+    private static final int ELEVATOR_PHASE1 = 800;
     private static final int ELEVATOR_FUDGE = 100;
     private static final double ELEVATOR_UP_POWER = 1.0;                                             // Speed we want elevator to move at when being manually controlled for fine tuning height
     private static final double ELEVATOR_DOWN_POWER = .5;
@@ -61,8 +83,11 @@ public class TelopTesting extends OpMode {
     private static final int ELEVATOR_HIGH = 3200;
 
     private static final double CRANE_POWER = 1;                                                    // Speed we want the crane to move
-    private static final int CRANE_FUDGE = 10;
-    private static final int CRANE_OUT = 700;
+    private static final int CRANE_FUDGE = 30;
+    private static final int CRANE_OUT = 860;
+    private static final int CRANE_IN = 0;
+    private static final int CRANE_MAGNET_POSITION = 110;
+    private static final int CRANE_MAGNET_WIDTH = 30;
 
     private static final double CRAB_DOWN = 0.4;
     private static final double CRAB_UP = 0.65;
@@ -76,16 +101,15 @@ public class TelopTesting extends OpMode {
         telemetry.addData("Status", "Initializing");
 
         // Chassis
-        motorBackLeft = hardwareMap.get(DcMotor.class, "motor0");
-        motorBackRight = hardwareMap.get(DcMotor.class, "motor1");
-        motorFrontLeft = hardwareMap.get(DcMotor.class, "motor2");
-        motorFrontRight = hardwareMap.get(DcMotor.class, "motor3");
+        leftRearMotor = hardwareMap.get(DcMotor.class, "motorBackLeft");
+        leftFrontMotor = hardwareMap.get(DcMotor.class, "motorFrontLeft");
+        rightRearMotor = hardwareMap.get(DcMotor.class, "motorBackRight");
+        rightFrontMotor = hardwareMap.get(DcMotor.class, "motorFrontRight");
 
-
-        motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
-        motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
-        motorBackRight.setDirection(DcMotor.Direction.FORWARD);
-        motorFrontRight.setDirection(DcMotor.Direction.FORWARD);
+        leftRearMotor.setDirection(DcMotor.Direction.REVERSE);
+        leftFrontMotor.setDirection(DcMotor.Direction.REVERSE);
+        rightRearMotor.setDirection(DcMotor.Direction.FORWARD);
+        rightFrontMotor.setDirection(DcMotor.Direction.FORWARD);
 
         //Elevator
         elevatorMotor = hardwareMap.get(DcMotor.class, "elevator");
@@ -95,10 +119,13 @@ public class TelopTesting extends OpMode {
         elevatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Crane
-        craneMotor = hardwareMap.get(DcMotor.class, "crane");
-        craneMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        craneMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        craneMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        craneMotor = hardwareMap.get(DcMotorEx.class, "crane");
+        craneMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        craneMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        craneMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+
+        craneMagnet = hardwareMap.get(DigitalChannel.class, "crane_magnet");
+        craneMagnet.setMode(DigitalChannel.Mode.INPUT);
 
         // Hand
         handServo = hardwareMap.get(Servo.class, "hand");
@@ -116,8 +143,16 @@ public class TelopTesting extends OpMode {
         crabServo.setPosition(CRAB_UP);
         crabUp = true;
 
+        // Cap Stone
+        capServo = hardwareMap.get(Servo.class, "cap");
+        capServo.setPosition(0.0);
+
+        // LEDs
+//        ledLights = hardwareMap.get(LED.class, "leds");
+//        ledLights.
+
         // Tell the driver that initialization is complete.
-        telemetry.addData("Status", "Initialized");
+        telemetry.addData("Status", "Initialized COMPLETE");
     }
 
     @Override
@@ -136,7 +171,7 @@ public class TelopTesting extends OpMode {
          // **** UPDATE STATE VARIABLES
          ************************/
         int elevatorPosition = elevatorMotor.getCurrentPosition();                                 // Get current position and flip from negative to positive to make logic more readable
-        int cranePosition = craneMotor.getCurrentPosition();
+        int cranePosition = craneMotor.getCurrentPosition() + craneOffset;
         double elevatorPower = 0.0;                                                                 // Initialize to zero as the default power level and then determine below if we need to move
         double cranePower = 0.0;
 
@@ -154,6 +189,9 @@ public class TelopTesting extends OpMode {
             if (g1lefttriggerPressed) {
                 handServo.setPosition(HAND_OUT);
                 elevatorAutomate = true;
+                elevatorPhase1 = false;
+                elevatorPhase2 = false;
+                craneDone = false;
             }
         }
 
@@ -163,6 +201,9 @@ public class TelopTesting extends OpMode {
             if (g2lefttriggerPressed) {
                 handServo.setPosition(HAND_OUT);
                 elevatorAutomate = true;
+                elevatorPhase1 = false;
+                elevatorPhase2 = false;
+                craneDone = false;
             }
         }
 
@@ -175,27 +216,33 @@ public class TelopTesting extends OpMode {
          **** AUTOMATION
          ************************/
         if (elevatorAutomate) {
-            boolean elevatorPhase1 = (elevatorPosition <= 1000) || (elevatorPosition >= 700);       // We need the elevator above 700 to be able to pull the crane all the way in otherwise it will hit the crab
-            boolean elevatorPhase2 = (elevatorPosition <= 50);
-            boolean craneDone = (cranePosition <= 0);
+            if (!elevatorPhase1 && elevatorPosition < ELEVATOR_PHASE1 - ELEVATOR_FUDGE)
+                elevatorPower = ELEVATOR_UP_POWER;
 
-            if (!craneDone)
-                cranePower = -CRANE_POWER;
-            else
-                cranePower = 0;
-
-            if (!elevatorPhase1) {
-                if (elevatorPosition < 700)
-                    elevatorPower = ELEVATOR_UP_POWER;                                              // if the elevator is too low move it up
-                else
-                    elevatorPower = -ELEVATOR_DOWN_POWER;                                           // otherwise it is too high so begin moving it down
-            }
-            else if (elevatorPhase1 && !craneDone)                                                  // if the first phase of the elevator is done but crane isn't stop the elevator until the crane finishes
-                elevatorPower = 0;
-            else if (elevatorPhase1 & craneDone)                                                    // Once phase1 of elevator is done and crane is done move elevator the rest of the way down
+            if (!elevatorPhase1 && elevatorPosition > ELEVATOR_PHASE1 + ELEVATOR_FUDGE)
                 elevatorPower = -ELEVATOR_DOWN_POWER;
 
-            if (elevatorPhase2)                                                                     // Once the phase2 of the elevator is done the automation is done
+            if (elevatorPosition <= ELEVATOR_PHASE1 + ELEVATOR_FUDGE && elevatorPosition >= ELEVATOR_PHASE1 - ELEVATOR_FUDGE) {
+                elevatorPower = 0;
+                elevatorPhase1 = true;
+            }
+
+            if (elevatorPhase1 && craneDone && !elevatorPhase2)
+                elevatorPower = -ELEVATOR_DOWN_POWER;
+
+            if (!craneDone) {
+                if (cranePosition > CRANE_FUDGE)
+                    cranePower = -CRANE_POWER;
+                if (cranePosition < -CRANE_FUDGE)
+                    cranePower = CRANE_POWER;
+            }
+
+            if (cranePosition <= CRANE_FUDGE && cranePosition >= -CRANE_FUDGE) {
+                cranePower = 0;
+                craneDone = true;
+            }
+
+            if (elevatorPosition < 100 && craneDone)                                                                     // Once the phase2 of the elevator is done the automation is done
                 elevatorAutomate = false;
         }
 
@@ -228,10 +275,10 @@ public class TelopTesting extends OpMode {
         }
 
         // Set motor powers
-        motorBackLeft.setPower(leftRearPower);
-        motorBackRight.setPower(rightRearPower);
-        motorFrontLeft.setPower(leftFrontPower);
-        motorFrontRight.setPower(rightFrontPower);
+        leftRearMotor.setPower(leftRearPower);
+        rightRearMotor.setPower(rightRearPower);
+        leftFrontMotor.setPower(leftFrontPower);
+        rightFrontMotor.setPower(rightFrontPower);
 
         /************************
          // **** SUCKER *********
@@ -255,16 +302,18 @@ public class TelopTesting extends OpMode {
         /************************
          **** ELEVATOR
          ************************/
+        boolean elevatorBottom = (elevatorPosition <= ELEVATOR_BOTTOM + ELEVATOR_FUDGE &&
+                elevatorPosition >= ELEVATOR_BOTTOM - ELEVATOR_FUDGE);
         if ((!gamepad1.y) && (!gamepad1.a)) {                                                       // If no input from controller 1 then look at controller 2
-            if (gamepad2.y)                                                                            // Operator 1's Y is pressed and we haven't reached our maximum height
-                elevatorPower = ELEVATOR_UP_POWER;                                                     // Move up at a controllable speed
-            else if ((gamepad2.a) && (elevatorPosition - ELEVATOR_FUDGE >= ELEVATOR_LOW))                   // Operator 1's A is pressed and we haven't reached the bottom
-                elevatorPower = -ELEVATOR_DOWN_POWER;                                                  // Move down at a controllable speed
+            if (gamepad2.y)                                                                         // Operator 1's Y is pressed and we haven't reached our maximum height
+                elevatorPower = ELEVATOR_UP_POWER;                                                  // Move up at a controllable speed
+            else if (gamepad2.a && !elevatorBottom)                                                 // Operator 1's A is pressed and we haven't reached the bottom
+                elevatorPower = -ELEVATOR_DOWN_POWER;                                               // Move down at a controllable speed
         } else {
-            if (gamepad1.y)                                                                            // Operator 1's Y is pressed and we haven't reached our maximum height
-                elevatorPower = ELEVATOR_UP_POWER;                                                     // Move up at a controllable speed
-            else if ((gamepad1.a) && (elevatorPosition - ELEVATOR_FUDGE >= ELEVATOR_LOW))                   // Operator 1's A is pressed and we haven't reached the bottom
-                elevatorPower = -ELEVATOR_DOWN_POWER;                                                  // Move down at a controllable speed
+            if (gamepad1.y)                                                                         // Operator 1's Y is pressed and we haven't reached our maximum height
+                elevatorPower = ELEVATOR_UP_POWER;                                                  // Move up at a controllable speed
+            else if (gamepad1.a && !elevatorBottom)                                                 // Operator 1's A is pressed and we haven't reached the bottom
+                elevatorPower = -ELEVATOR_DOWN_POWER;                                               // Move down at a controllable speed
         }
 
         if (elevatorPosition > 200 && elevatorPower == 0)                                           // If the elevator is up and power is 0 we need to change it to a small up to make the motor hold
@@ -275,18 +324,40 @@ public class TelopTesting extends OpMode {
         /************************
          **** CRANE
          ************************/
-        if ((!gamepad1.dpad_down) && (!gamepad1.dpad_up)) {                                                       // If no input from controller 1 then look at controller 2
-            if (gamepad2.dpad_down)                                                                   // Ignore input if crane is already all the way back
-                cranePower = -CRANE_POWER;                                                       // Operator 1 is moving crane so move at slower speed for small adjustments
+        boolean craneIn = (cranePosition >= CRANE_IN - CRANE_FUDGE &&
+                cranePosition <= CRANE_IN + CRANE_FUDGE);
+        boolean craneOut = (cranePosition >= CRANE_OUT - CRANE_FUDGE &&
+                cranePosition <= CRANE_OUT + CRANE_FUDGE);
+        if ((!gamepad1.dpad_down) && (!gamepad1.dpad_up)) {                                         // If no input from controller 1 then look at controller 2
+            if (gamepad2.dpad_down && !craneIn)                                                     // Ignore input if crane is already all the way back
+                cranePower = -CRANE_POWER;                                                          // Operator 1 is moving crane so move at slower speed for small adjustments
 
-            if (gamepad2.dpad_up && cranePosition + CRANE_FUDGE < CRANE_OUT)                           // Ignore input if crane is already all the way out
-                cranePower = CRANE_POWER;                                                        // Operator 1 is moving crane so move at slower speed for small adjustments
+            if (gamepad2.dpad_up && !craneOut)                                                      // Ignore input if crane is already all the way out
+                cranePower = CRANE_POWER;                                                           // Operator 1 is moving crane so move at slower speed for small adjustments
         } else {
-            if (gamepad1.dpad_down)                                                                   // Ignore input if crane is already all the way back
-                cranePower = -CRANE_POWER;                                                       // Operator 1 is moving crane so move at slower speed for small adjustments
+            if (gamepad1.dpad_down && !craneIn)                                                     // Ignore input if crane is already all the way back
+                cranePower = -CRANE_POWER;                                                          // Operator 1 is moving crane so move at slower speed for small adjustments
 
-            if (gamepad1.dpad_up && cranePosition + CRANE_FUDGE < CRANE_OUT)                           // Ignore input if crane is already all the way out
-                cranePower = CRANE_POWER;                                                        // Operator 1 is moving crane so move at slower speed for small adjustments
+            if (gamepad1.dpad_up && !craneOut)                                                      // Ignore input if crane is already all the way out
+                cranePower = CRANE_POWER;                                                           // Operator 1 is moving crane so move at slower speed for small adjustments
+        }
+
+        if (craneMagnet.getState() != craneMagLastState) {
+            craneMagLastState = !craneMagLastState;
+            craneLastMagHit = cranePosition;
+            if (!craneMagLastState && cranePower > 0)
+                craneOffset = (CRANE_MAGNET_POSITION - CRANE_MAGNET_WIDTH/2) -
+                        craneMotor.getCurrentPosition();
+
+            if (!craneMagLastState && cranePower < 0)
+                craneOffset = (CRANE_MAGNET_POSITION + CRANE_MAGNET_WIDTH/2) -
+                        craneMotor.getCurrentPosition();
+
+            if (craneMagLastState == false)
+                craneMagStartFalse = cranePosition;
+
+            if (craneMagLastState == true)
+                craneMagEndFalse = cranePosition;
         }
 
         craneMotor.setPower(cranePower);                                                            // Set power determined above to motor
@@ -294,7 +365,7 @@ public class TelopTesting extends OpMode {
         /************************
          **** HAND
          ************************/
-        if ((!gamepad1.dpad_left) && (!gamepad1.dpad_right)) {                                                       // If no input from controller 1 then look at controller 2
+        if ((!gamepad1.dpad_left) && (!gamepad1.dpad_right)) {                                      // If no input from controller 1 then look at controller 2
             if (gamepad2.dpad_left)
                 handServo.setPosition(HAND_OUT);
             if (gamepad2.dpad_right)
@@ -322,15 +393,34 @@ public class TelopTesting extends OpMode {
         }
 
         /************************
+         **** CAP STONE
+         ************************/
+        if (gamepad1.back)
+            capServo.setPosition(0.5);
+
+        /************************
          **** TELEMETRY
          ************************/
         telemetry.addData("Status", runtime.toString());
 //        telemetry.addData("Front Motors", "Left (%.2f), Right (%.2f)", leftFrontPower, rightFrontPower);
 //        telemetry.addData("Rear Motors", "Left (%.2f), Right (%.2f)", leftRearPower, rightRearPower);
-        telemetry.addData("Drive Reverse ", driveReverse);
+//        telemetry.addData("Drive Reverse ", driveReverse);
         telemetry.addData("Elevator Height", elevatorPosition);
         telemetry.addData("Elevator Power", elevatorPower);
-        telemetry.addData("Crane Position", cranePosition);
+        telemetry.addData("Crane Position var", cranePosition);
+        telemetry.addData("Crane Position cal", craneMotor.getCurrentPosition());
+
+//        telemetry.addData("Elevator Phase 1", elevatorPhase1);
+//        telemetry.addData("Elevator Phase 2", elevatorPhase2);
+//        telemetry.addData("Elevator Automate", elevatorAutomate);
+//        telemetry.addData("Crane Out", craneOut);
+//        telemetry.addData("Crane In", craneIn);
+
+//        telemetry.addData("Crane Magnet Position", craneLastMagHit);
+        telemetry.addData("Crane Start of False", craneMagStartFalse);
+        telemetry.addData("Crane End of False", craneMagEndFalse);
+        telemetry.addData("Crane Offset", craneOffset);
+
     }
 
     @Override

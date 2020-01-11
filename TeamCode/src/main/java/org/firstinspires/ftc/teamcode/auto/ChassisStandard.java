@@ -277,8 +277,8 @@ public abstract class ChassisStandard extends OpMode {
         // Initialize the motors.
         if (useMotors) {
             try {
-                motorBackLeft = hardwareMap.get(DcMotor.class, "motor0");
-                motorBackRight = hardwareMap.get(DcMotor.class, "motor1");
+                motorBackLeft = hardwareMap.get(DcMotor.class, "motorBackLeft");
+                motorBackRight = hardwareMap.get(DcMotor.class, "motorBackRight");
 
                 // Most robots need the motor on one side to be reversed to drive forward
                 // Reverse the motor that runs backwards when connected directly to the battery
@@ -296,8 +296,8 @@ public abstract class ChassisStandard extends OpMode {
                 //motorBackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
                 if (config.getUseFourWheelDrive()) {
-                    motorFrontLeft = hardwareMap.get(DcMotor.class, "motor2");
-                    motorFrontRight = hardwareMap.get(DcMotor.class, "motor3");
+                    motorFrontLeft = hardwareMap.get(DcMotor.class, "motorFrontLeft");
+                    motorFrontRight = hardwareMap.get(DcMotor.class, "motorFrontRight");
 
                     motorFrontLeft.setDirection(config.isLeftMotorReversed() ? DcMotor.Direction.REVERSE : DcMotor.Direction.FORWARD);
                     motorFrontRight.setDirection(config.isRightMotorReversed() ? DcMotor.Direction.REVERSE : DcMotor.Direction.FORWARD);
@@ -321,7 +321,7 @@ public abstract class ChassisStandard extends OpMode {
     protected void initCrab() {
         if (useCrab) {
             try {
-                crab = hardwareMap.get(Servo.class, "servoCrab");
+                crab = hardwareMap.get(Servo.class, "crab");
             } catch (Exception e) {
                 telemetry.addData("crab", "exception on init: " + e.toString());
                 useCrab = false;
@@ -402,8 +402,8 @@ public abstract class ChassisStandard extends OpMode {
                 useFingers = false;
             }
 
-            raiseBackFinger();
-            raiseFrontFinger();
+            raiseRightFinger();
+            raiseLeftFinger();
         }
     }
 
@@ -602,28 +602,28 @@ public abstract class ChassisStandard extends OpMode {
     }
 
 
-    public void dropFrontFinger() {
+    public void dropLeftFinger() {
         if (useFingers) {
             fingerLeftAngle = 1.0;
             fingerLeft.setPosition(fingerLeftAngle);
         }
     }
 
-    public void raiseFrontFinger() {
+    public void raiseLeftFinger() {
         if (useFingers) {
             fingerLeftAngle = 0.0;
             fingerLeft.setPosition(fingerLeftAngle);
         }
     }
     
-    public void dropBackFinger() {
+    public void dropRightFinger() {
         if (useFingers) {
-            fingerRightAngle = 0.0;
+            fingerRightAngle = 0.3;
             fingerRight.setPosition(fingerRightAngle);
         }
     }
 
-    public void raiseBackFinger() {
+    public void raiseRightFinger() {
         if (useFingers) {
             fingerRightAngle = 1.0;
             fingerRight.setPosition(fingerRightAngle);

@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.auto.ChassisStandard;
 @Autonomous(name="Move Test", group="ZZTesting")
 public class MoveTest extends ChassisStandard {
 
-    public static int sleepTime = 5000;
+    public static int sleepTime = 1500;
 
     @Override
     public void makeTheRun () {

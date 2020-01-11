@@ -13,22 +13,17 @@ public class ClawTest extends ChassisStandard {
     public static int sleepTime = 1500;
 
     @Override
-    public void loop () {
+    public void makeTheRun () {
 
-        if (madeTheRun == false) {
+        for (int i = 0 ; i < 3 ; i++) {
+            raiseCrab();
+            sleep(sleepTime);
 
-            for (int i = 0 ; i < 3 ; i++) {
-                raiseCrab();
-                sleep(sleepTime);
-
-                dropCrab();
-                sleep(sleepTime);
-            }
-
-            madeTheRun = true;
+            dropCrab();
+            sleep(sleepTime);
         }
 
-        printStatus();
+        raiseCrab();
     }
 }
 
